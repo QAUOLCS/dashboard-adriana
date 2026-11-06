@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Executivo adrIAna - Qualidade Retenção</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --bg-page: #F4F7FB; --bg-card: #FFFFFF; --bg-subtle: #F8FAFC;
+      --text-primary: #0F172A; --text-secondary: #475569; --text-muted: #94A3B8;
+      --border-color: #E2E8F0; --brand-primary: #2563EB; --accent-purple: #7C3AED;
+      --success: #10B981; --warning: #F59E0B; --danger: #EF4444;
+      --danger-bg: #FEF2F2; --warning-bg: #FFFBEB; --success-bg: #ECFDF5;
+      --info: #0EA5E9; --info-bg: #F0F9FF;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+      --radius-md: 10px; --radius-lg: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-primary); padding-bottom: 48px; }
+    
+    /* TOPBAR EXECUTIVA */
+    .topbar { background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 14px 28px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); flex-wrap: wrap; gap: 14px; }
+    .brand-area { display: flex; align-items: center; gap: 14px; }
+    .brand-logo { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(135deg, var(--brand-primary), var(--accent-purple)); display: flex; align-items: center; justify-content: center; color: #FFF; font-weight: 800; font-size: 18px; }
+    .brand-title h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .badge-portal { font-size: 11px; font-weight: 600; text-transform: uppercase; background: #EFF6FF; color: var(--brand-primary); padding: 2px 8px; border-radius: 99px; border: 1px solid #BFDBFE; }
+    .brand-title p { font-size: 12px; color: var(--text-secondary); }
+    
+    .sync-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .sync-status { font-size: 12px; color: var(--text-secondary); background: var(--bg-subtle); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px; }
+    .dot-live { width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block; transition: background 0.3s; }
+    .btn { font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; }
+    .btn:hover { background: var(--bg-subtle); }
+    .btn-primary { background: var(--brand-primary); color: #FFFFFF; border-color: var(--brand-primary); }
+    .btn-primary:hover { background: #1D4ED8; border-color: #1D4ED8; }
+    
+    .container { max-width: 1480px; margin: 22px auto 0; padding: 0 24px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* NAVEGAÇÃO DE ABAS */
+    .tabs-nav { display: flex; gap: 6px; border-bottom: 1px solid var(--border-color); padding-bottom: 0; flex-wrap: wrap; }
+    .tab-btn { font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px 16px; border-radius: 10px 10px 0 0; background: transparent; color: var(--text-secondary); border: none; border-bottom: 3px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.15s ease; }
+    .tab-btn:hover { color: var(--brand-primary); background: rgba(37, 99, 235, 0.04); }
+    .tab-btn.active { color: var(--brand-primary); background: var(--bg-card); border-bottom: 3px solid var(--brand-primary); box-shadow: var(--shadow-sm); }
+    .tab-badge { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; background: #EFF6FF; color: var(--brand-primary); }
+    .tab-badge-hot { background: #FEF2F2; color: var(--danger); }
+    .tab-content { display: none; }
+    .tab-content.active { display: flex; flex-direction: column; gap: 22px; }
+    
+    /* FILTROS */
+    .filter-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 18px 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
+    .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+    .filter-header h2 { font-size: 14px; font-weight: 700; margin: 0; }
+    .filters-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; min-width: 165px; flex: 1; }
+    .filter-group label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); }
+    .filter-group select, .filter-group input { font-family: inherit; font-size: 12.5px; padding: 7px 10px; border-radius: 7px; border: 1px solid var(--border-color); outline: none; background: var(--bg-subtle); }
+    .filter-group select:focus, .filter-group input:focus { border-color: var(--brand-primary); background: #FFF; }
+    
+    /* KPIS */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 14px; }
+    .kpi-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px; border: 1px solid var(--border-color); position: relative; overflow: hidden; box-shadow: var(--shadow-sm); }
+    .kpi-card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--brand-primary); }
+    .kpi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 6px; }
+    .kpi-label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); line-height: 1.25; }
+    .kpi-value { font-size: 26px; font-weight: 800; margin: 4px 0; color: var(--text-primary); }
+    .kpi-sub { font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
+    
+    /* GRÁFICOS E SEÇÕES */
+    .charts-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 18px; }
+    .charts-grid-equal { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .charts-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    @media (max-width: 1024px) {
+      .charts-grid, .charts-grid-equal, .charts-grid-3 { grid-template-columns: 1fr; }
+    }
+    .section-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
+    .section-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .section-header h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .section-header span { font-size: 12px; color: var(--text-secondary); }
+    .chart-wrapper { position: relative; height: 300px; width: 100%; margin-top: 14px; }
+    .chart-wrapper-sm { position: relative; height: 250px; width: 100%; margin-top: 14px; }
+    
+    /* TABELAS */
+    .table-wrap { overflow-x: auto; margin-top: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
+    th { background: var(--bg-subtle); color: var(--text-secondary); font-weight: 700; text-transform: uppercase; font-size: 11px; padding: 11px 13px; border-bottom: 1px solid var(--border-color); }
+    td { padding: 11px 13px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+    .main-row { cursor: pointer; transition: background 0.15s; } 
+    .main-row:hover { background: #F1F5F9; }
+    
+    .badge { padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+    .badge-product { background: #EEF2FF; color: #4338CA; border: 1px solid #E0E7FF; }
+    .badge-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #FECACA; }
+    .badge-warning { background: var(--warning-bg); color: #B45309; border: 1px solid #FDE68A; }
+    .badge-success { background: var(--success-bg); color: #047857; border: 1px solid #A7F3D0; }
+    .badge-info { background: var(--info-bg); color: #0369A1; border: 1px solid #BAE6FD; }
+    .badge-neutral { background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; }
+    
+    .drilldown-row { display: none; background: #F8FAFC; border-bottom: 2px solid #CBD5E1; }
+    .drilldown-row.active { display: table-row; }
+    .btn-genesys { background: #FF4F1F; color: #FFF; padding: 5px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .btn-genesys:hover { opacity: 0.9; }
+    .reason-chip { background: #FFF; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; margin: 4px; box-shadow: var(--shadow-sm); }
+    .reason-chip strong { color: var(--danger); background: var(--danger-bg); padding: 1px 6px; border-radius: 4px; }
+    .expand-icon { display: inline-block; transition: transform 0.2s; color: var(--brand-primary); font-weight: bold; }
+    .main-row.expanded .expand-icon { transform: rotate(90deg); }
+
+    /* CARDS DE MOTIVOS / TEXTO LIVRE */
+    .reasons-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; max-height: 360px; overflow-y: auto; padding-right: 4px; }
+    .reason-item-card { background: var(--bg-subtle); border: 1px solid var(--border-color); border-left: 4px solid var(--brand-primary); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .reason-item-card.danger { border-left-color: var(--danger); }
+    .reason-item-card.warning { border-left-color: var(--warning); }
+    .reason-item-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 11.5px; color: var(--text-secondary); }
+    .reason-item-text { font-size: 12.5px; color: var(--text-primary); line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-area">
+      <div class="brand-logo">IA</div>
+      <div class="brand-title">
+        <h1>Dashboard Executivo — adrIAna <span class="badge-portal">Qualidade Retenção</span></h1>
+        <p>Monitoramento Executivo de Qualidade &amp; Negócio | Sincronização Automática SharePoint</p>
+      </div>
+    </div>
+    <div class="sync-controls">
+      <div class="sync-status">
+        <span class="dot-live" id="dotLive"></span>
+        <span id="syncStatusText">Sincronizado Automaticamente</span>
+      </div>
+      <a class="btn" href="https://uolinc.sharepoint.com/sites/Qualidade-CallCenter-UOLCS/Documentos%20Partilhados/QUALIDADE/Formul%C3%A1rios%20de%20Monitoria/2026/Agentes%20Wonderful/Avalia%C3%A7%C3%A3o%20AdrIAna%20-%20Reten%C3%A7%C3%A3o.xlsx?web=1" target="_blank" rel="noopener" title="Abrir planilha Avaliação AdrIAna - Retenção.xlsx (Agentes Wonderful) no SharePoint">
+        📊 Planilha SharePoint
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- PAINEL GLOBAL DE FILTROS -->
+    <section class="filter-card">
+      <div class="filter-header">
+        <h2>🔍 Filtros Dinâmicos Globais (Aplicados a Todas as Abas)</h2>
+        <button class="btn" id="btnClearFilters">Limpar Filtros</button>
+      </div>
+      <div class="filters-grid">
+        <div class="filter-group"><label>Mês</label><select id="fMes"><option value="">Todos(as)</option></select></div>
+        <div class="filter-group"><label>De</label><input type="date" id="fDateStart" /></div>
+        <div class="filter-group"><label>Até</label><input type="date" id="fDateEnd" /></div>
+        <div class="filter-group"><label>Produto</label><select id="fProduto"><option value="">Todos(as)</option></select></div>
+        <div class="filter-group"><label>Resultado Negociação</label><select id="fResultado"><option value="">Todos(as)</option></select></div>
+        <div class="filter-group"><label>Elegibilidade (FCRQ)</label><select id="fElegibilidade"><option value="">Todos(as)</option></select></div>
+        <div class="filter-group"><label>Avaliador</label><select id="fAvaliador"><option value="">Todos(as)</option></select></div>
+      </div>
+    </section>
+
+    <!-- NAVEGAÇÃO DE ABAS -->
+    <nav class="tabs-nav" aria-label="Visões do Dashboard">
+      <button class="tab-btn active" data-tab="tab-executiva">
+        📊 Dashboard
+      </button>
+      <button class="tab-btn" data-tab="tab-negocio">
+        💼 Resultado de Negócio
+        <span class="tab-badge" id="badgeRetencao">0%</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-fcrq">
+        ✅ FCRQ
+        <span class="tab-badge" id="badgeFCRQ">0%</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-adicionais">
+        🤖 Experiência &amp; Diagnóstico IA
+      </button>
+      <button class="tab-btn" data-tab="tab-reincidencias">
+        🎯 Visão por Produto
+        <span class="tab-badge" id="badgeCountProdutos">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-base">
+        📋 Base Completa
+        <span class="tab-badge" id="badgeCountAuditorias">0</span>
+      </button>
+    </nav>
+
+    <!-- ================================================================= -->
+    <!-- ABA 1: DASHBOARD (KPIS + GRÁFICOS)                                -->
+    <!-- ================================================================= -->
+    <div class="tab-content active" id="tab-executiva">
+      <section class="kpi-grid">
+        <div class="kpi-card" style="border-top-color: var(--brand-primary);">
+          <div class="kpi-top"><span class="kpi-label">Nota Geral</span></div>
+          <div class="kpi-value" id="kpiNotaGeral">0,0%</div>
+          <div class="kpi-sub"></div>
+        </div>
+        
+        <div class="kpi-card" style="border-top-color: var(--brand-primary);">
+          <div class="kpi-top"><span class="kpi-label">Amostras</span></div>
+          <div class="kpi-value" id="kpiVolume">0</div>
+          <div class="kpi-sub" id="kpiVolumeSub"></div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #3B82F6;">
+          <div class="kpi-top"><span class="kpi-label">Nota Bloco<br/>Cliente (50%)</span></div>
+          <div class="kpi-value" id="kpiNotaCliente">0,0%</div>
+          <div class="kpi-sub" id="kpiVolCliente">0 amostras</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #8B5CF6;">
+          <div class="kpi-top"><span class="kpi-label">Nota Bloco<br/>Negócio (40%)</span></div>
+          <div class="kpi-value" id="kpiNotaNegocio">0,0%</div>
+          <div class="kpi-sub" id="kpiVolNegocio">0 amostras</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #10B981;">
+          <div class="kpi-top"><span class="kpi-label">Nota Bloco<br/>Processo (10%)</span></div>
+          <div class="kpi-value" id="kpiNotaProcesso">0,0%</div>
+          <div class="kpi-sub" id="kpiVolProcesso">0 amostras</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--danger); background-color: var(--danger-bg);">
+          <div class="kpi-top"><span class="kpi-label" style="color:var(--danger);">Erro Crítico<br/>(EC)</span></div>
+          <div class="kpi-value" id="kpiECPct" style="color:var(--danger);">0,0%</div>
+          <div class="kpi-sub" id="kpiECVol" style="color:var(--danger);">0 ocorrências</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--warning); background-color: var(--warning-bg);">
+          <div class="kpi-top"><span class="kpi-label" style="color:#B45309;">Falha Grave<br/>(FG)</span></div>
+          <div class="kpi-value" id="kpiFGPct" style="color:#B45309;">0,0%</div>
+          <div class="kpi-sub" id="kpiFGVol" style="color:#B45309;">0 ocorrências</div>
+        </div>
+      </section>
+
+      <section class="charts-grid">
+        <div class="section-card">
+          <div class="section-header"><div><h3>📈 Evolução Mensal</h3><span>Outubro e Novembro — Volume de Amostras e Nota Geral (%)</span></div></div>
+          <div class="chart-wrapper"><canvas id="chartEvolution"></canvas></div>
+        </div>
+        <div class="section-card">
+          <div class="section-header"><div><h3>🚨 Top 5 Ofensores</h3><span>Motivos de Penalidade (Apontamentos Oficiais)</span></div></div>
+          <div class="chart-wrapper"><canvas id="chartOffenders"></canvas></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- ABA 2: RESULTADO DE NEGÓCIO (EXTREMAMENTE IMPORTANTE)             -->
+    <!-- ================================================================= -->
+    <div class="tab-content" id="tab-negocio">
+      <section class="kpi-grid">
+        <div class="kpi-card" style="border-top-color: #059669; background: #ECFDF5;">
+          <div class="kpi-top"><span class="kpi-label" style="color:#065F46;">Taxa de Retenção Total<br/>(Arg. + Desconto)</span></div>
+          <div class="kpi-value" id="kpiNegRetencaoTotalPct" style="color:#047857;">0,0%</div>
+          <div class="kpi-sub" id="kpiNegRetencaoTotalVol" style="color:#065F46;">0 clientes retidos</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #10B981;">
+          <div class="kpi-top"><span class="kpi-label">Retido com<br/>Argumentação</span></div>
+          <div class="kpi-value" id="kpiNegRetArgPct" style="color:#059669;">0,0%</div>
+          <div class="kpi-sub" id="kpiNegRetArgVol">0 ocorrências</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #2563EB;">
+          <div class="kpi-top"><span class="kpi-label">Retido com<br/>Desconto</span></div>
+          <div class="kpi-value" id="kpiNegRetDescPct" style="color:#2563EB;">0,0%</div>
+          <div class="kpi-sub" id="kpiNegRetDescVol">0 ocorrências</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--danger);">
+          <div class="kpi-top"><span class="kpi-label">Cancelado<br/>(Não Retido)</span></div>
+          <div class="kpi-value" id="kpiNegCanceladoPct" style="color:var(--danger);">0,0%</div>
+          <div class="kpi-sub" id="kpiNegCanceladoVol">0 ocorrências</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--warning);">
+          <div class="kpi-top"><span class="kpi-label">Transferiu /<br/>Queda / Muda</span></div>
+          <div class="kpi-value" id="kpiNegTransfPct" style="color:#D97706;">0,0%</div>
+          <div class="kpi-sub" id="kpiNegTransfVol">0 ocorrências</div>
+        </div>
+      </section>
+
+      <section class="charts-grid-equal">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>💼 Qual resultado da negociação? (Distribuição Geral)</h3>
+              <span>Retido com argumentação • Retido com desconto • Cancelado • Transferiu/Queda/Muda</span>
+            </div>
+          </div>
+          <div class="chart-wrapper"><canvas id="chartNegocioGeral"></canvas></div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>📦 Resultado da Negociação por Produto</h3>
+              <span>Comparativo entre Conteúdo Exclusivo e UOL Play</span>
+            </div>
+          </div>
+          <div class="chart-wrapper"><canvas id="chartNegocioProduto"></canvas></div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-header">
+          <div>
+            <h3>📋 Detalhamento das Negociações &amp; Resumo do Atendimento</h3>
+            <span>Lista completa com Motivo do Contato, Resultado da Negociação, Resumo e link para ouvir a ligação no Genesys Cloud.</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>IDT_Conversation</th>
+                <th>Produto</th>
+                <th>Qual motivo do contato?</th>
+                <th>Qual resultado da negociação?</th>
+                <th>Nota Final</th>
+                <th>Resumo do Atendimento</th>
+                <th>Genesys</th>
+              </tr>
+            </thead>
+            <tbody id="negocioTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- ABA 3: FCRQ (ELEGIBILIDADE & RESOLUÇÃO)                           -->
+    <!-- ================================================================= -->
+    <div class="tab-content" id="tab-fcrq">
+      <section class="kpi-grid">
+        <div class="kpi-card" style="border-top-color: var(--brand-primary);">
+          <div class="kpi-top"><span class="kpi-label">Elegibilidade:<br/>Elegível</span></div>
+          <div class="kpi-value" id="kpiFcrqElegivelPct" style="color:var(--brand-primary);">0,0%</div>
+          <div class="kpi-sub" id="kpiFcrqElegivelVol">0 de 0 chamadas</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #64748B;">
+          <div class="kpi-top"><span class="kpi-label">Elegibilidade:<br/>Não Elegível</span></div>
+          <div class="kpi-value" id="kpiFcrqNaoElegivelPct" style="color:#475569;">0,0%</div>
+          <div class="kpi-sub" id="kpiFcrqNaoElegivelVol">0 de 0 chamadas</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--success); background: var(--success-bg);">
+          <div class="kpi-top"><span class="kpi-label" style="color:#065F46;">Elegível - Resolução:<br/>Resolveu</span></div>
+          <div class="kpi-value" id="kpiFcrqResolveuPct" style="color:#047857;">0,0%</div>
+          <div class="kpi-sub" id="kpiFcrqResolveuVol" style="color:#065F46;">0 dos elegíveis</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--danger); background: var(--danger-bg);">
+          <div class="kpi-top"><span class="kpi-label" style="color:var(--danger);">Elegível - Resolução:<br/>Não Resolveu</span></div>
+          <div class="kpi-value" id="kpiFcrqNaoResolveuPct" style="color:var(--danger);">0,0%</div>
+          <div class="kpi-sub" id="kpiFcrqNaoResolveuVol" style="color:var(--danger);">0 dos elegíveis</div>
+        </div>
+      </section>
+
+      <section class="charts-grid-3">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Elegibilidade</h3>
+              <span>Elegível vs. Não elegível</span>
+            </div>
+          </div>
+          <div class="chart-wrapper-sm"><canvas id="chartFcrqElegibilidade"></canvas></div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Elegível — Resolução</h3>
+              <span>Resolveu vs. Não resolveu</span>
+            </div>
+          </div>
+          <div class="chart-wrapper-sm"><canvas id="chartFcrqResolucao"></canvas></div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Não Elegível — Resolução</h3>
+              <span>Transbordo • Transferência • Queda • Outro</span>
+            </div>
+          </div>
+          <div class="chart-wrapper-sm"><canvas id="chartFcrqNaoElegivelOpcoes"></canvas></div>
+        </div>
+      </section>
+
+      <section class="charts-grid-equal">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Motivo Não Resolveu</h3>
+              <span>Detalhamento das interações elegíveis não resolvidas</span>
+            </div>
+          </div>
+          <div class="reasons-list" id="listMotivoNaoResolveu"></div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Motivo Não Elegível</h3>
+              <span>Detalhamento das interações não elegíveis</span>
+            </div>
+          </div>
+          <div class="reasons-list" id="listMotivoNaoElegivel"></div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-header">
+          <div>
+            <h3>📋 Matriz Completa FCRQ por Interação</h3>
+            <span>Visão consolidada de Elegibilidade e Resolução com acesso direto à gravação no Genesys Cloud.</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>IDT_Conversation</th>
+                <th>Produto</th>
+                <th>Elegibilidade</th>
+                <th>Elegível - Resolução</th>
+                <th>Motivo Não Resolveu</th>
+                <th>Não Elegível - Resolução</th>
+                <th>Motivo Não Elegível</th>
+                <th>Genesys</th>
+              </tr>
+            </thead>
+            <tbody id="fcrqTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- ABA 4: EXPERIÊNCIA & DIAGNÓSTICO IA                               -->
+    <!-- ================================================================= -->
+    <div class="tab-content" id="tab-adicionais">
+      <section class="kpi-grid">
+        <div class="kpi-card" style="border-top-color: var(--danger);">
+          <div class="kpi-top"><span class="kpi-label">Queixa por falar<br/>com robô?</span></div>
+          <div class="kpi-value" id="kpiAddQueixaRoboPct">0,0%</div>
+          <div class="kpi-sub" id="kpiAddQueixaRoboVol">0 Sim / 0 Não</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--warning);">
+          <div class="kpi-top"><span class="kpi-label">Cliente pediu para<br/>falar com humano?</span></div>
+          <div class="kpi-value" id="kpiAddPediuHumanoPct">0,0%</div>
+          <div class="kpi-sub" id="kpiAddPediuHumanoVol">0 Sim / 0 Não</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--success);">
+          <div class="kpi-top"><span class="kpi-label">Atendimento prestado<br/>no cadastro correto?</span></div>
+          <div class="kpi-value" id="kpiAddCadastroCorretoPct">0,0%</div>
+          <div class="kpi-sub" id="kpiAddCadastroCorretoVol">0 Sim / 0 Não</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: var(--accent-purple);">
+          <div class="kpi-top"><span class="kpi-label">Ruído do cliente<br/>impossibilitou IA?</span></div>
+          <div class="kpi-value" id="kpiAddRuidoClientePct">0,0%</div>
+          <div class="kpi-sub" id="kpiAddRuidoClienteVol">0 Sim / 0 Não</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #0EA5E9;">
+          <div class="kpi-top"><span class="kpi-label">Velocidade da fala<br/>inadequada</span></div>
+          <div class="kpi-value" id="kpiAddVelocidadeNCPct">0,0%</div>
+          <div class="kpi-sub" id="kpiAddVelocidadeNCVol">0 ocorrências</div>
+        </div>
+
+        <div class="kpi-card" style="border-top-color: #EC4899;">
+          <div class="kpi-top"><span class="kpi-label">Looping<br/>Conversacional</span></div>
+          <div class="kpi-value" id="kpiAddLoopingNCPct">0,0%</div>
+          <div class="kpi-sub" id="kpiAddLoopingNCVol">0 ocorrências</div>
+        </div>
+      </section>
+
+      <section class="charts-grid-equal">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>🤖 Indicadores Adicionais do Formulário</h3>
+              <span>Proporção de Respostas (Sim vs. Não / Conforme vs. Não Conforme)</span>
+            </div>
+          </div>
+          <div class="chart-wrapper"><canvas id="chartAdicionaisResumo"></canvas></div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>💬 Motivos &amp; Descrições Registradas</h3>
+              <span>Respostas abertas preenchidas nas auditorias</span>
+            </div>
+          </div>
+          <div class="reasons-list" id="listMotivosAdicionais"></div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-header">
+          <div>
+            <h3>📋 Tabela Completa — Informações Adicionais</h3>
+            <span>Detalhamento linha a linha com motivos abertos e link direto para o Genesys Cloud.</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>IDT_Conversation</th>
+                <th>Produto</th>
+                <th>Queixa Robô?</th>
+                <th>Motivo Queixa Robô</th>
+                <th>Pediu Humano?</th>
+                <th>Motivo Pediu Humano</th>
+                <th>Cadastro Correto?</th>
+                <th>Descrição Cadastro</th>
+                <th>Ruído Cliente?</th>
+                <th>Velocidade / Looping</th>
+                <th>Genesys</th>
+              </tr>
+            </thead>
+            <tbody id="adicionaisTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- ABA 5: VISÃO POR PRODUTO & DRILL-DOWN GENESYS                     -->
+    <!-- ================================================================= -->
+    <div class="tab-content" id="tab-reincidencias">
+      <section class="section-card">
+        <div class="section-header">
+          <div>
+            <h3>🎯 Visão por Produto</h3>
+            <span>Clique na linha do produto para expandir o Drill-down de Motivos e acessar a gravação no Genesys Cloud.</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="reincidenceTable">
+            <thead>
+              <tr>
+                <th style="width:36px;"></th>
+                <th>Produto Avaliado</th>
+                <th>Amostras Avaliadas</th>
+                <th>Total Reincidências (NC)</th>
+                <th>% de Reincidência</th>
+                <th>Nota Média</th>
+              </tr>
+            </thead>
+            <tbody id="reincidenceTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- ABA 6: BASE COMPLETA DE AUDITORIAS                                -->
+    <!-- ================================================================= -->
+    <div class="tab-content" id="tab-base">
+      <section class="section-card">
+        <div class="section-header">
+          <div>
+            <h3>📋 Base Completa de Auditorias (adrIAna)</h3>
+            <span>Detalhamento individual por interação, notas por bloco (50/40/10), apontamentos e link direto para o Genesys Cloud.</span>
+          </div>
+          <div style="min-width:260px;">
+            <input type="text" id="fSearchBase" placeholder="🔎 Buscar por IDT_Conversation, IDT_Person ou Protocolo..." style="width:100%;font-size:12.5px;padding:8px 12px;border-radius:8px;border:1px solid var(--border-color);outline:none;" />
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="fullAuditTable">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>IDT_Conversation</th>
+                <th>IDT_Person / Protocolo</th>
+                <th>Produto</th>
+                <th>Resultado Negociação</th>
+                <th>Elegibilidade / Resolução</th>
+                <th>Cliente (50%)</th>
+                <th>Negócio (40%)</th>
+                <th>Processo (10%)</th>
+                <th>Nota Final</th>
+                <th>Apontamentos NC</th>
+                <th>Genesys Cloud</th>
+              </tr>
+            </thead>
+            <tbody id="fullAuditTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // =========================================================================
+    // CONFIGURAÇÃO DO VÍNCULO AUTOMÁTICO COM A PLANILHA SHAREPOINT UOL CS
+    // =========================================================================
+    const SHAREPOINT_WEB_URL = "https://uolinc.sharepoint.com/sites/Qualidade-CallCenter-UOLCS/Documentos%20Partilhados/QUALIDADE/Formul%C3%A1rios%20de%20Monitoria/2026/Agentes%20Wonderful/Avalia%C3%A7%C3%A3o%20AdrIAna%20-%20Reten%C3%A7%C3%A3o.xlsx?web=1";
+    const SHAREPOINT_SOURCEDOC_ID = "1DDE17DF-A86C-49B9-8743-A5C1312A163F";
+    const SHAREPOINT_SOURCEDOC_COMPACT = "1dde17dfa86c49b98743a5c1312a163f";
+    const SHAREPOINT_SHARE_TOKEN = "cQrfF94dbKi5SYdDpcExKhY_EgUCn6e3cH2ucB7nHR_cdIvDXw";
+
+    const SHAREPOINT_SYNC_URLS = [
+      `./Avaliação AdrIAna - Retenção.xlsx`,
+      `./Avalia%C3%A7%C3%A3o%20AdrIAna%20-%20Reten%C3%A7%C3%A3o.xlsx`,
+      `https://uolinc.sharepoint.com/sites/Qualidade-CallCenter-UOLCS/Documentos%20Partilhados/QUALIDADE/Formul%C3%A1rios%20de%20Monitoria/2026/Agentes%20Wonderful/Avalia%C3%A7%C3%A3o%20AdrIAna%20-%20Reten%C3%A7%C3%A3o.xlsx?download=1`,
+      `https://uolinc.sharepoint.com/sites/Qualidade-CallCenter-UOLCS/_api/web/GetFileByServerRelativeUrl('/sites/Qualidade-CallCenter-UOLCS/Documentos%20Partilhados/QUALIDADE/Formul%C3%A1rios%20de%20Monitoria/2026/Agentes%20Wonderful/Avalia%C3%A7%C3%A3o%20AdrIAna%20-%20Reten%C3%A7%C3%A3o.xlsx')/$value`,
+      `https://uolinc.sharepoint.com/sites/Qualidade-CallCenter-UOLCS/_layouts/15/download.aspx?UniqueId=${SHAREPOINT_SOURCEDOC_COMPACT}`,
+      `https://uolinc.sharepoint.com/sites/Qualidade-CallCenter-UOLCS/_layouts/15/download.aspx?UniqueId=${SHAREPOINT_SOURCEDOC_ID.toLowerCase()}`,
+      `https://uolinc.sharepoint.com/sites/Qualidade-CallCenter-UOLCS/_layouts/15/download.aspx?UniqueId=%7B${SHAREPOINT_SOURCEDOC_ID}%7D&share=${SHAREPOINT_SHARE_TOKEN}`
+    ];
+
+    const GENESYS_EVALUATION_ID = "7b7e05c4-fe34-4a97-b219-1eaf2812bbf4";
+
+    // LISTA COMPLETA DOS APONTAMENTOS SOLICITADOS PELA LIDERANÇA
+    const APONTAMENTOS_OFICIAIS = [
+      "Erro crítico", "Falha Grave", "Análise/Consulta", "Condução do atendimento", 
+      "Empatia ao motivo do contato / relato", "Checklist", "Informação incorreta",
+      "Falha Bloco - Cliente", "Sondagem", "Argumentação", 
+      "Estratégia de Retenção", "Falha Bloco - Negócio", "Gestão de tempo", 
+      "Informações repetidas/desnecessárias", "Registro do atendimento",
+      "Falha Bloco - Processo", "A velocidade da fala foi adequada para entendimento do cliente?",
+      "Looping conversacional"
+    ];
+
+    // BASE REAL EMBUTIDA DA PLANILHA (GARANTE ACESSO PÚBLICO IMEDIATO A TODOS OS USUÁRIOS)
+    const INITIAL_SHAREPOINT_ROWS = [{"Id":"23","Hora de início":"46331.428240740701","Hora de conclusão":"46331.443530092598","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46330","ID da conversa":"8472f207-dcfe-4c53-99bb-80793df8f484","Idtperson":"627460568","Protocolo":"20261102277248","Qual motivo do contato?":"Falta de utilização","Resumo do atendimento":"Cliente entra em contato solicitando cancelamento, pois não tem mais interesse e não utiliza o serviço","Produto":"Conteúdo exclusivo","Erro crítico":"Não conforme","Motivos \"EC\"":"Transferência indevida: Transferência sem informar o cliente","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Não resolveu","Descreva o motivo não resolveu":"Não realiza o processo de cancelamento e posteriormente finaliza/transfere mesmo sendo que o processo que deveria ser realizado e de responsabilidade dela, não dependendo de uma resposta do cliente, pois o mesmo ja havia dito que queria cancelar.","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Transferiu/Queda/Muda","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0","Cliente":"0","Negocio":"1","Processo":"1"},{"Id":"22","Hora de início":"46331.4231828704","Hora de conclusão":"46331.428194444401","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46331","ID da conversa":"d140f0b3-4bcf-4744-9dd5-9b805326fb76","Idtperson":"627421725","Protocolo":"20261102267531","Qual motivo do contato?":"Não reconhece assinatura","Resumo do atendimento":"Cliente entra em contato informando que deseja cancelar por que a assinatura é \"indevida\" diante do relato a IA transfere o atendimento ao humano.","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Não elegível","Elegível - Resolução":"","Descreva o motivo não resolveu":"","Não elegível - Resolução":"Transferência - Solicitação do cliente","Motivo não elegível":"Transferiu ao atendimento humano devido a seriedade do caso.","Qual resultado da negociação?":"Transferiu/Queda/Muda","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"1","Cliente":"1","Negocio":"1","Processo":"1"},{"Id":"21","Hora de início":"46331.417986111097","Hora de conclusão":"46331.423148148097","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46331","ID da conversa":"629aca4c-3ea3-4779-9fec-dc9a3aac2338","Idtperson":"627030431","Protocolo":"20261002207766","Qual motivo do contato?":"Dificuldade Financeira / Não utiliza","Resumo do atendimento":"Cliente entra em contato informando que ja havia solicitado cancelamento anteriormente, por dificuldade financeira e falta de uso","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Não conforme","Opções check list":"Fez parcial","Motivo \"Checklist\"":"Pronuncia a URL do sac.uol de forma incorreta e confusa.","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Resolveu","Descreva o motivo não resolveu":"","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0.92","Cliente":"0.92","Negocio":"1","Processo":"1"},{"Id":"20","Hora de início":"46331.409421296303","Hora de conclusão":"46331.417962963002","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46323","ID da conversa":"e7bb40d4-0076-4b97-83da-78869237590b","Idtperson":"626840693","Protocolo":"20261002208330","Qual motivo do contato?":"Não reconhece a contratação","Resumo do atendimento":"Cliente quer cancelar, pois alega que não contratou e se tiver contratado foi por engano, então não deseja permanecer.","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Não conforme","Opções check list":"Fez parcial","Motivo \"Checklist\"":"Pronuncia o nome do site sac.uol.com.br de forma incorreta.","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Não conforme","Motivo - \"Estratégia de Retenção\"":"Não ofereceu a ultima escala de 50% de desconto, mesmo o cliente não estando atritado.","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Resolveu","Descreva o motivo não resolveu":"","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0.72","Cliente":"0.92","Negocio":"0.5","Processo":"1"},{"Id":"19","Hora de início":"46331.403159722198","Hora de conclusão":"46331.409398148098","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46323","ID da conversa":"e7ceead2-16a4-4557-ab96-98be59f8c52f","Idtperson":"628289472","Protocolo":"20261002210967","Qual motivo do contato?":"Venda Casada","Resumo do atendimento":"Cliente entra em contato alegando querer cancelar por venda casada, devido a gravidade da situação a IA transferiu o atendimento.","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Não elegível","Elegível - Resolução":"","Descreva o motivo não resolveu":"","Não elegível - Resolução":"Transferência - Solicitação do cliente","Motivo não elegível":"Devido a seriedade do caso apresentado pelo cliente a IA fez a transferência do atendimento ao humano.","Qual resultado da negociação?":"Transferiu/Queda/Muda","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"1","Cliente":"1","Negocio":"1","Processo":"1"},{"Id":"18","Hora de início":"46331.397280092599","Hora de conclusão":"46331.403124999997","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46331","ID da conversa":"ead1c6b5-e0c7-44e2-ae4c-698c38e35859","Idtperson":"626749710","Protocolo":"20261002238659","Qual motivo do contato?":"Dificuldade Financeira","Resumo do atendimento":"Cliente diz que esta caro e que não vai mais usar","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Não conforme","Opções check list":"Fez parcial","Motivo \"Checklist\"":"tem pronunciado o site \"sac.uol.com.br\" de uma maneira confusa para se entender.","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Não conforme","Motivo \"Informações repetidas/desnecessárias\"":"No início do contato a IA refaz o fluxo de abordagem e sondagem sem necessidade (por instabilidade)","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Resolveu","Descreva o motivo não resolveu":"","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0.9","Cliente":"0.92","Negocio":"1","Processo":"0.97"},{"Id":"17","Hora de início":"46331.376863425903","Hora de conclusão":"46331.397233796299","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46326","ID da conversa":"1b12b168-02f4-4cfe-8c17-0499228d6bde","Idtperson":"625200515","Protocolo":"20261002236865","Qual motivo do contato?":"Não tem interesse","Resumo do atendimento":"Cliente deseja cancelar, pois não tem mais interesse no uso do serviço","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Não conforme","Motivo - \"Estratégia de Retenção\"":"IA não seguiu o degrau de oferta, oferecendo apenas 20% mas após recusa não oferece os 50%, prosseguindo apenas com cancelamento onde no cenario do atendimento a cliente estava tranquila.","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Resolveu","Descreva o motivo não resolveu":"","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0.8","Cliente":"1","Negocio":"0.5","Processo":"1"},{"Id":"16","Hora de início":"46330.698182870401","Hora de conclusão":"46330.702465277798","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46325","ID da conversa":"fe7c2112-7fb0-4a6e-a586-6d24bc17670d","Idtperson":"625595973","Protocolo":"20261002225708","Qual motivo do contato?":"Cliente não reconhece a compra","Resumo do atendimento":"Cliente deseja cancelar e alega que não reconhece a compra e que não se recorda da contratação","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Não elegível","Elegível - Resolução":"","Descreva o motivo não resolveu":"","Não elegível - Resolução":"Transferência - Solicitação do cliente","Motivo não elegível":"Cliente solicitou falar com atendente quando a IA informou que seguiria com cancelamento, após realizar todas as ofertas de retenção.","Qual resultado da negociação?":"Transferiu/Queda/Muda","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Sim","Motivo \"cliente pediu para falar com humano?\"":"Cliente solicitou falar com atendente quando a IA informou que seguiria com cancelamento, após realizar todas as ofertas de retenção.","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"1","Cliente":"1","Negocio":"1","Processo":"1"},{"Id":"15","Hora de início":"46330.682638888902","Hora de conclusão":"46330.6887615741","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46325","ID da conversa":"bdfb5f46-7538-4dea-a0f5-7beaf3b39d25","Idtperson":"627060638","Protocolo":"20261002233286","Qual motivo do contato?":"Não utiliza deseja cancelar","Resumo do atendimento":"Cliente alega que não utiliza e esta recebendo uma cobrança no qual não concorda, devido a menção sobre valores, foi feito a transferência ao humano com aceite do cliente.","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Não conforme","Motivo \"Informações repetidas/desnecessárias\"":"00:20 ate 00:40 a IA faz a mesma sondagem, quando a cliente ja respondeu que deseja cancelar pois não gostou.","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Não elegível","Elegível - Resolução":"","Descreva o motivo não resolveu":"","Não elegível - Resolução":"Transferência - Solicitação do cliente","Motivo não elegível":"Pela menção do cliente referente a valores, a IA oferece o atendimento humano para garantir mais informações e auxilio, de acordo com aceite da cliente a transferência é realizada.","Qual resultado da negociação?":"Transferiu/Queda/Muda","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Sim ","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0.98","Cliente":"1","Negocio":"1","Processo":"0.97"},{"Id":"14","Hora de início":"46330.677997685198","Hora de conclusão":"46330.678460648203","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46325","ID da conversa":"e04221f8-f505-4d09-b820-dba0fc6fd560","Idtperson":"627497223","Protocolo":"20261002233663","Qual motivo do contato?":"Deseja cancelar o serviço","Resumo do atendimento":"Cliente deseja fazer o cancelamento mas do inicio ao fim do contato com a IA não se pronuncia o que leva a transferência indevida.","Produto":"Conteúdo exclusivo","Erro crítico":"Não conforme","Motivos \"EC\"":"Transferência indevida: Transferência sem informar o cliente","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Não elegível","Elegível - Resolução":"","Descreva o motivo não resolveu":"","Não elegível - Resolução":"Outro","Motivo não elegível":"Falta de interação por parte do cliente.","Qual resultado da negociação?":"Transferiu/Queda/Muda","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Sim ","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0","Cliente":"0","Negocio":"1","Processo":"1"},{"Id":"12","Hora de início":"46309.672569444403","Hora de conclusão":"46309.680937500001","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46309","ID da conversa":"c0d827f1-0cb5-4aa9-bb28-f2a0f595528a","Idtperson":"625701406","Protocolo":"20261001992449","Qual motivo do contato?":"Dificuldade Financeira","Resumo do atendimento":"Cliente entra em contato solicitando cancelamento, pois esta sem dinheiro para permanecer com serviço, diante disto adriana oferece uma das escalas de desconto disponiveis, diante da recusa segue com o cancelamento do produto.","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"Conforme","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Não conforme","Opções check list":"Fez parcial","Motivo \"Checklist\"":"Quando informa sobre o link do sac.uol.com.br utiliza uma pronuncia confusa de se entender qual de fato é a URL","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Não conforme","Motivo \"Argumentação\"":"Não efetua contorno de objeção, apresentando novas ideias e benefícios do produto afim de buscar reverter o cliente","Estratégia de Retenção":"Não conforme","Motivo - \"Estratégia de Retenção\"":"Segue apenas um degrau da oferta de desconto, para o contexto do atendimento seguir com as demais ofertas ate mesmo ofertas como uol play pipoca e ingresso poderiam ser diferenciais tendo em vista que a solicitação de cancelamento é referente a custos.","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Não conforme","Motivo \"Informações repetidas/desnecessárias\"":"02:02 ela reafirma que vai seguir com cancelamento, é perceptivel que antes que o cliente falasse ela ia perguntar se ele ainda estava presente. 02:57 ela pergunta novamente se o cliente esta ali e logo em seguida reafirma que vai seguir com cancelamento. 04:01 ela novamente pergunta se o cliente esta presente, e em seguida efetua definitivamente o cancelamento.","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"Conforme","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Resolveu","Descreva o motivo não resolveu":"","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Não conforme","Motivo Looping conversacional":"Ficou repetindo que seguiria com cancelamento por alguns momentos, mas não efetuava o cancelamento definitivamente. Em momentos que informou que iria seguir com cancelamento momentos depois retornava validando se o cliente estava presente, e reafirmava que iria seguir com cancelamento, mas não fazia.","Nota Geral":"0.6","Cliente":"0.92","Negocio":"0.25","Processo":"0.97"},{"Id":"11","Hora de início":"46309.648333333302","Hora de conclusão":"46309.6725462963","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46309","ID da conversa":"6c5258f2-c059-4bdd-bf8f-2414090effc2","Idtperson":"626915213","Protocolo":"20261001980727","Qual motivo do contato?":"Não reconhece a compra","Resumo do atendimento":"Cliente solicita cancelamento alegando que nunca utilizou e esta debitando de seu cartão, adriana analisa o caso, fala dos beneficios oferece os descontos, diante da interrupção do cliente informando que não tem interesse, foi efetuado o cancelamento.","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"Conforme","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Não conforme","Opções check list":"Fez parcial","Motivo \"Checklist\"":"Quando informa o link do site do sac.uol.com.br, a sua pronuncia fica confusa, não dando a entender de fato qual é a URL.","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Não conforme","Motivo \"Argumentação\"":"Acredito que na segunda argumentação que fala do desconto maior poderíamos trazer uma fala que enriqueça ainda mais os benefícios do produto, não falando apenas do desconto maior mas apresentando diferenciais ate dando exemplos de uso no dia a dia em questão ao serviço.","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"Conforme","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Resolveu","Descreva o motivo não resolveu":"","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0.82","Cliente":"0.92","Negocio":"0.75","Processo":"1"},{"Id":"10","Hora de início":"46309.634444444397","Hora de conclusão":"46309.648287037002","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46309","ID da conversa":"a43f4012-113e-47a4-a9ce-6dd03a477b7c","Idtperson":"627029582","Protocolo":"20261002012855","Qual motivo do contato?":"Não concorda com a cobrança","Resumo do atendimento":"Cliente solicitou cancelamento do produto, pois teve duas cobranças no mesmo período e não concorda, Adriana busca validar o interesse em cancelar e diante da confirmação do cliente, foi feito cancelamento sem realizar oferta de desconto ou estratégias.","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Não conforme","Motivos FG":"Descaso com o negócio: Demonstrar descaso com as regras, produtos ou interesses do negócio.","\"Outro\" - Motivo FG":"Não oferece descontos ou argumenta afim de buscar reverter a permanência do cliente, apenas segue com cancelamento mediante ao interesse do cancelamento do mesmo.","Análise/Consulta":"Conforme","Motivo Análise/Consulta":"","Condução do atendimento":"Não conforme","Motivo \"Condução do atendimento\"":"Cliente além do cancelamento, informa sobre a duplicidade de cobrança e queria entender sobre ela, adriana não responde as perguntas do cliente e não oferece transferencia para o atendente, contato foi finalizado.","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Não conforme","Opções check list":"Fez parcial","Motivo \"Checklist\"":"No checklist, efetua a pronuncia do site sac.uol.com.br de maneira confusa, se tornando difícil a compreensão do conteúdo pronunciado.","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Não conforme","Motivo \"Argumentação\"":"Não efetua nenhuma oferta ou estrategia apenas segue com cancelamento.","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"Conforme","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Não resolveu","Descreva o motivo não resolveu":"Deixa de explicar ao cliente sobre o valor / Não responde aos questionamentos do cliente sobre o valor / Não faz a transferência para um atendente para que seja verificado esta questão.","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0","Cliente":"0","Negocio":"0.75","Processo":"1"},{"Id":"9","Hora de início":"46309.536331018498","Hora de conclusão":"46309.634398148097","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46309","ID da conversa":"64f200b8-5918-44db-8381-56332917e896","Idtperson":"626753961","Protocolo":"20261002021900","Qual motivo do contato?":"Não reconhece a compra","Resumo do atendimento":"Cliente solicita cancelamento, informa nunca ter utilizado este serviço e não sabe do que se trata, efetuado argumentação e apresentação e apresentado uma das escalas de negociação, mediante a recusa cancelamento foi realizado.","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"Conforme","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Não conforme","Motivo \"Argumentação\"":"Não trouxe contra argumentação apresentando outros diferenciais do serviço e benefícios juntamente com as posteriores escalas de desconto.","Estratégia de Retenção":"Não conforme","Motivo - \"Estratégia de Retenção\"":"Não seguiu com as demais estratégias disponíveis de desconto e de reversão, ofereceu apenas 20% de desconto.","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Não conforme","Motivo \"Gestão de tempo\"":"Após a leitura do checklist ao cliente a mesma não finaliza o contato e nem busca validar com cliente, exemplo: Auxilio em algo mais ou ficou alguma duvida? pelo contrario, ela informa que ainda esta ali para ajudar e então cliente se manifesta e então repete a mesma informação e não conduz para um encerramento.","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"Conforme","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Resolveu","Descreva o motivo não resolveu":"","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0.66","Cliente":"1","Negocio":"0.25","Processo":"0.97"},{"Id":"8","Hora de início":"46309.436435185198","Hora de conclusão":"46309.536296296297","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46308","ID da conversa":"0a40964c-9186-4893-a807-835cc28fad6c","Idtperson":"244483141","Protocolo":"20261002022461","Qual motivo do contato?":"Não reconhece assinatura / Cobrança duplicada","Resumo do atendimento":"Cliente entra em contato com interesse em cancelar, diz não reconhecer a contratação e questiona a duplicidade de cobrança. Diante da seriedade foi feito a transferência para o atendimento humano.","Produto":"Uol Play","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"Conforme","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Conforme ","Motivo \"Gestão de tempo\"":"","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"Conforme","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Não elegível","Elegível - Resolução":"","Descreva o motivo não resolveu":"","Não elegível - Resolução":"Outro","Motivo não elegível":"Adriana efetua a transferencia da ligação devido as menções de não reconhecimento da compra e cobrança de valores que não concorda.","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"1","Cliente":"1","Negocio":"1","Processo":"1"},{"Id":"7","Hora de início":"46308.680254629602","Hora de conclusão":"46308.689062500001","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46308","ID da conversa":"abff55f4-c989-4075-ba81-521b72e486e1","Idtperson":"627471543","Protocolo":"20261001943976","Qual motivo do contato?":"Nunca teve interesse no produto (cancelar)","Resumo do atendimento":"Cliente entra em contato solicitando cancelamento, informa que não deseja mais nem um serviço vinculado ao seu CPF, adriana analisa o caso oferece a primeira oportunidade, porém cliente ja a corta informando que não deseja, diante disso a mesma segue com cancelamento do UOL PLAY, cliente reforça que deseja cancelar todos os serviços vinculados em seu nome, diante disso adriana orienta que vai transferi-la a um especialista pois ela possui autonomia de tratar apenas o UOL PLAY. cliente concorda e o contato é direcionado.","Produto":"Uol Play","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"Conforme","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Não conforme","Motivo \"Argumentação\"":"Sei que a ideia é auxiliar e facilitar o processo de cancelamento ou retenção, mas nos primeiros segundos por conta do cliente so ter mencionado que não deseja ela ja parte para o cancelamento, acredito que poderíamos adotar uma postura tipo \"Olha eu entendo e respeito a sua decisão, mas gostaria de pedir uma oportunidade para apresentar os benefícios que o plano oferece e as condições exclusivas que tenho a você\" e diante disso tentar fazer a oferta caso o cliente não a corte, caso corte novamente seguiríamos com cancelamento.","Estratégia de Retenção":"Conforme","Motivo - \"Estratégia de Retenção\"":"","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Não conforme","Motivo \"Gestão de tempo\"":"Após a leitura do checklist de cancelamento, a IA não interage mais, acredito que poderiamos perguntar \"ajudo em algo mais\" para que assim seja feita a interação para entender se algo mais pode ser feito ou se pode seguir com a finalização do contato.","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"Conforme","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Resolveu","Descreva o motivo não resolveu":"","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0.86","Cliente":"1","Negocio":"0.75","Processo":"0.97"},{"Id":"6","Hora de início":"46308.668715277803","Hora de conclusão":"46308.6802314815","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46308","ID da conversa":"ac418724-b27c-43f8-82d6-971ec07a4512","Idtperson":"626016738","Protocolo":"20261001949574","Qual motivo do contato?":"Cancelamento (Não utiliza)","Resumo do atendimento":"Cliente entrou em contato pelo SAC solicitando cancelamento, foi direcionado pelo atende humano para URA de retenção, diante disto Adriana fez o atendimento, ofereceu os descontos disponiveis e diante da reprova seguiu com cancelamento","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"Conforme","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Não conforme","Motivo \"Argumentação\"":"Senti que poderiamos ter falado de mais alguns diferenciais do plano na segunda oferta de desconto, para que não fique apenas falando do valor de desconto, poderiamos pedir uma oportunidade ressaltar outros detalhes ou ate dar exemplos de como o produto é util no dia a dia.","Estratégia de Retenção":"Não conforme","Motivo - \"Estratégia de Retenção\"":"Não ofereceu a estrategia disponivel, como ingresso.com ou Uol play Pipoca.","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Não conforme","Motivo \"Gestão de tempo\"":"Após efetuar leitura do checklist de cancelamento não interage mais com o cliente. Acredito que após a leitura ou qualquer interação do cliente após a leitura, poderiamos perguntar \"ajudo em algo mais?\" e posteriormente finalizar contato a depender da solicitação do cliente.","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"Conforme","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Resolveu","Descreva o motivo não resolveu":"","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Não conforme","Motivo \"velocidade da fala\"":"01:10 ate 01:50 fiquei com sentimento de que ela disparou a falar de valores e datas muito rapido.","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0.66","Cliente":"1","Negocio":"0.25","Processo":"0.97"},{"Id":"5","Hora de início":"46308.655694444402","Hora de conclusão":"46308.668680555602","Email":"anônima","Nome":"","Qual seu nome?":"Mauro Da Silva Santana","Data da ligação":"46308","ID da conversa":"7d32436b-11dc-4e64-b931-e6ca7902ad8f","Idtperson":"626954016","Protocolo":"20261001975174","Qual motivo do contato?":"Cancelamento (Não reconhece a compra)","Resumo do atendimento":"Cliente entrou em contato solicitando cancelamento informando que não reconhece, durante contato foi oferecido os descontos disponvieis ao cliente, diante das recusas foi seguido com o procedimento de cancelamento.","Produto":"Conteúdo exclusivo","Erro crítico":"Conforme","Motivos \"EC\"":"","\"Outro\" - Motivo EC":"","Falha Grave":"Conforme","Motivos FG":"","\"Outro\" - Motivo FG":"","Análise/Consulta":"Conforme","Motivo Análise/Consulta":"","Condução do atendimento":"Conforme","Motivo \"Condução do atendimento\"":"","Empatia ao motivo do contato / relato":"Conforme ","Motivo \"Empatia do motivo do contato / relato\"":"","Checklist":"Conforme","Opções check list":"","Motivo \"Checklist\"":"","Informação incorreta":"Conforme","Opções de informação incorreta":"","Motivo \"Informação incorreta\"":"","Falha Bloco - Cliente":"Conforme","\"Motivo Falha Bloco Cliente\"":"","Sondagem":"Conforme","Motivo \"Sondagem\"":"","Argumentação":"Conforme","Motivo \"Argumentação\"":"","Estratégia de Retenção":"Não conforme","Motivo - \"Estratégia de Retenção\"":"Não ofereceu as estratégias disponíveis como Uol play pipoca ou receba 20 (ingresso.com)","Falha Bloco - Negócio":"Conforme","Motivo \"Falha Bloco - Negócio\"":"","Gestão de tempo":"Não conforme","Motivo \"Gestão de tempo\"":"No final do contato entre 02:30 ate 03:16, após a leitura do checklist de cancelamento, ela não finaliza o contato, acredito que o ideal aqui seria ela perguntar \"ajudo em algo mais\" a partir dai finalizar a interação.","Informações repetidas/desnecessárias":"Conforme","Motivo \"Informações repetidas/desnecessárias\"":"","Registro do atendimento":"Conforme","Motivo \"Registro do atendimento\"":"","Falha Bloco - Processo":"Conforme","Motivo \"Falha Bloco - Processo\"":"","Elegibilidade":"Elegível","Elegível - Resolução":"Resolveu","Descreva o motivo não resolveu":"","Não elegível - Resolução":"","Motivo não elegível":"","Qual resultado da negociação?":"Cancelado","Houve queixa por falar com robô?":"Não","Motivo \"Houve queixa por falar com robô?\"":"","O cliente pediu para falar com humano?":"Não","Motivo \"cliente pediu para falar com humano?\"":"","O atendimento foi prestado no cadastro correto?":"Sim","Descreva em qual cadastro o atendimento foi prestado":"","Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?":"Não","A velocidade da fala foi adequada para entendimento do cliente?":"Conforme","Motivo \"velocidade da fala\"":"","Looping conversacional":"Conforme","Motivo Looping conversacional":"","Nota Geral":"0.76","Cliente":"1","Negocio":"0.5","Processo":"0.97"}];
+
+    let globalDataset = [];
+    let chartEvolutionInstance = null;
+    let chartOffendersInstance = null;
+    let chartNegocioGeralInstance = null;
+    let chartNegocioProdutoInstance = null;
+    let chartFcrqElegibilidadeInstance = null;
+    let chartFcrqResolucaoInstance = null;
+    let chartFcrqNaoElegivelInstance = null;
+    let chartAdicionaisInstance = null;
+
+    // Alternância de Abas
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+        btn.classList.add("active");
+        const target = document.getElementById(btn.dataset.tab);
+        if (target) target.classList.add("active");
+      });
+    });
+
+    function buildGenesysUrl(idtConversation) {
+      const cleanId = encodeURIComponent(String(idtConversation || "").trim());
+      return `https://apps.sae1.pure.cloud/directory/#/analytics/interactions/${cleanId}/admin/qualitySummary/?assignmentPanel=false&evaluationId=${GENESYS_EVALUATION_ID}&tabId=${cleanId}`;
+    }
+
+    function checkNC(val) {
+      if (!val) return false;
+      const s = String(val).trim().toLowerCase();
+      return (s === "não conforme" || s === "nao conforme" || s === "nc");
+    }
+
+    function checkSim(val) {
+      if (!val) return false;
+      const s = String(val).trim().toLowerCase();
+      return (s === "sim" || s === "yes" || s === "true");
+    }
+
+    function getMotivoForApontamento(r, ap) {
+      if (ap === "Erro crítico") {
+        return [r['Motivos "EC"'], r['"Outro" - Motivo EC']].filter(Boolean).join(" — ") || ap;
+      }
+      if (ap === "Falha Grave") {
+        return [r['Motivos FG'], r['"Outro" - Motivo FG']].filter(Boolean).join(" — ") || ap;
+      }
+      if (ap === "Checklist") {
+        return [r['Opções check list'], r['Motivo "Checklist"']].filter(Boolean).join(": ") || ap;
+      }
+      if (ap === "Informação incorreta") {
+        return [r['Opções de informação incorreta'], r['Motivo "Informação incorreta"']].filter(Boolean).join(": ") || ap;
+      }
+      if (ap === "A velocidade da fala foi adequada para entendimento do cliente?") {
+        return r['Motivo "velocidade da fala"'] || "Velocidade da fala inadequada";
+      }
+      if (ap === "Looping conversacional") {
+        return r['Motivo\u00a0Looping conversacional'] || r['Motivo Looping conversacional'] || "Looping conversacional";
+      }
+      const candidates = [
+        `Motivo "${ap}"`,
+        `Motivo - "${ap}"`,
+        `"Motivo ${ap}"`,
+        `"Motivo Falha Bloco Cliente"`,
+        `Motivo ${ap}`,
+        `Motivos ${ap}`,
+        `Motivo "Empatia do motivo do contato / relato"`
+      ];
+      for (const c of candidates) {
+        if (ap.includes("Empatia") && r['Motivo "Empatia do motivo do contato / relato"']) {
+          return String(r['Motivo "Empatia do motivo do contato / relato"']).trim();
+        }
+        if (ap.includes("Falha Bloco - Cliente") && r['"Motivo Falha Bloco Cliente"']) {
+          return String(r['"Motivo Falha Bloco Cliente"']).trim();
+        }
+        if (r[c]) return String(r[c]).trim();
+      }
+      return ap;
+    }
+
+    function normalizeResultadoNegociacao(val) {
+      const s = String(val || "").trim().toLowerCase();
+      if (s.includes("argumenta")) return "Retido com argumentação";
+      if (s.includes("desconto")) return "Retido com desconto";
+      if (s.includes("cancelado")) return "Cancelado";
+      if (s.includes("transfer") || s.includes("queda") || s.includes("muda")) return "Transferiu/Queda/Muda";
+      return val ? String(val).trim() : "Não informado";
+    }
+
+    function normalizeElegibilidade(val) {
+      const s = String(val || "").trim().toLowerCase();
+      if (s === "elegível" || s === "elegivel") return "Elegível";
+      if (s.includes("não eleg") || s.includes("nao eleg")) return "Não elegível";
+      return val ? String(val).trim() : "Não informado";
+    }
+
+    function normalizeElegivelResolucao(val) {
+      const s = String(val || "").trim().toLowerCase();
+      if (s === "resolveu") return "Resolveu";
+      if (s.includes("não resolveu") || s.includes("nao resolveu")) return "Não resolveu";
+      return val ? String(val).trim() : "";
+    }
+
+    function normalizeNaoElegivelResolucao(val) {
+      const s = String(val || "").trim().toLowerCase();
+      if (!s) return "";
+      if (s.includes("transbordo")) return "Transbordo - Processo não atendido";
+      if (s.includes("transferência") || s.includes("transferencia")) return "Transferência - Solicitação do cliente";
+      if (s.includes("queda")) return "Queda de ligação";
+      if (s.includes("outro")) return "Outro";
+      return String(val).trim();
+    }
+
+    function parseWorkbookRows(rawRows) {
+      return rawRows.map(r => {
+        const apontamentos = [];
+        APONTAMENTOS_OFICIAIS.forEach(ap => {
+          if (checkNC(r[ap])) {
+            const label = ap === "A velocidade da fala foi adequada para entendimento do cliente?"
+              ? "Velocidade da fala"
+              : ap;
+            apontamentos.push({ item: label, motivo: getMotivoForApontamento(r, ap) });
+          }
+        });
+
+        let rawProd = String(r["Produto"] || r["Produto (Portfólio UOL)"] || "").trim().toLowerCase();
+        let prod = "Conteúdo Exclusivo";
+        if (rawProd.includes("play")) prod = "UOL Play";
+
+        let rawDate = r["Hora de início"] || r["Hora de conclusão"] || r["Data"] || r["Data da ligação"] || "";
+        const numDate = Number(rawDate);
+        if (!isNaN(numDate) && numDate > 40000) {
+          const serialDay = Math.floor(numDate);
+          const d = new Date(Math.round((serialDay - 25569) * 86400 * 1000));
+          rawDate = d.toISOString().split("T")[0];
+        } else {
+          rawDate = String(rawDate).split(" ")[0].trim();
+          const brMatch = rawDate.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+          if (brMatch) rawDate = `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
+        }
+
+        const norm = (val) => {
+          if (val === undefined || val === "") return 1;
+          const n = parseFloat(String(val).replace(",", ".").replace("%", ""));
+          return isNaN(n) ? 1 : (n > 1 ? n / 100 : n);
+        };
+
+        const nomesMeses = {
+          "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
+          "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
+          "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
+        };
+        const dateParts = String(rawDate || "").split("-");
+        const mesCode = dateParts.length >= 2 ? dateParts[1] : "";
+        const mesNome = nomesMeses[mesCode] || "";
+
+        return {
+          Id: String(r["Id"] || ""),
+          Data: rawDate,
+          Mes: mesNome,
+          Mes_Codigo: mesCode,
+          IDT_Conversation: String(r["ID da conversa"] || r["IDT_Conversation"] || "").trim(),
+          IDT_Person: String(r["Idtperson"] || r["IDT_Person"] || "").trim(),
+          Protocolo: String(r["Protocolo"] || "").trim(),
+          Motivo_Contato: String(r["Qual motivo do contato?"] || "").trim(),
+          Resumo_Atendimento: String(r["Resumo do atendimento"] || "").trim(),
+          Produto: prod,
+          Celula: String(r["Celula"] || r["Célula"] || "Retenção PD").trim(),
+          Formulario: String(r["Formulario"] || r["Formulário"] || "Avaliação AdrIAna").trim(),
+          Canal: String(r["Canal"] || "Voz (IA)").trim(),
+          Avaliador: String(r["Qual seu nome?"] || r["Avaliador"] || "Auditor QA").trim(),
+          Erro_Critico: checkNC(r["Erro crítico"]),
+          Falha_Grave: checkNC(r["Falha Grave"]),
+          Nota_Bloco_Cliente: norm(r["Cliente"] !== undefined ? r["Cliente"] : r["Nota_Bloco_Cliente"]),
+          Nota_Bloco_Negocio: norm(r["Negocio"] !== undefined ? r["Negocio"] : (r["Negócio"] !== undefined ? r["Negócio"] : r["Nota_Bloco_Negocio"])),
+          Nota_Bloco_Processo: norm(r["Processo"] !== undefined ? r["Processo"] : r["Nota_Bloco_Processo"]),
+          Apontamentos: apontamentos,
+
+          // FCRQ (5 visões)
+          Elegibilidade: normalizeElegibilidade(r["Elegibilidade"]),
+          Elegivel_Resolucao: normalizeElegivelResolucao(r["Elegível - Resolução"]),
+          Motivo_Nao_Resolveu: String(r["Descreva o motivo não resolveu"] || r["Motivo não resolveu"] || "").trim(),
+          Nao_Elegivel_Resolucao: normalizeNaoElegivelResolucao(r["Não elegível - Resolução"]),
+          Motivo_Nao_Elegivel: String(r["Motivo não elegível"] || "").trim(),
+
+          // Resultado de Negócio
+          Resultado_Negociacao: normalizeResultadoNegociacao(r["Qual resultado da negociação?"]),
+
+          // Informações Adicionais (Perguntas 47 a 53 + Voz/Looping)
+          Queixa_Robo: checkSim(r["Houve queixa por falar com robô?"]) ? "Sim" : "Não",
+          Motivo_Queixa_Robo: String(r['Motivo "Houve queixa por falar com robô?"'] || "").trim(),
+          Pediu_Humano: checkSim(r["O cliente pediu para falar com humano?"]) ? "Sim" : "Não",
+          Motivo_Pediu_Humano: String(r['Motivo "cliente pediu para falar com humano?"'] || "").trim(),
+          Cadastro_Correto: String(r["O atendimento foi prestado no cadastro correto?"] || "Sim").trim().toLowerCase().startsWith("n") ? "Não" : "Sim",
+          Descricao_Cadastro: String(r["Descreva em qual cadastro o atendimento foi prestado"] || "").trim(),
+          Ruido_Cliente: checkSim(r["Houve ruído por parte do cliente que impossibilitou o entendimento da AdrIAna?"]) ? "Sim" : "Não",
+          Velocidade_Fala: checkNC(r["A velocidade da fala foi adequada para entendimento do cliente?"]) ? "Não conforme" : "Conforme",
+          Motivo_Velocidade_Fala: String(r['Motivo "velocidade da fala"'] || "").trim(),
+          Looping_Conversacional: checkNC(r["Looping conversacional"]) ? "Não conforme" : "Conforme",
+          Motivo_Looping: String(r["Motivo\u00a0Looping conversacional"] || r["Motivo Looping conversacional"] || "").trim()
+        };
+      }).filter(r => r.IDT_Conversation && r.IDT_Conversation.toUpperCase() !== "TESTE" && r.Mes_Codigo !== "09");
+    }
+
+    function isValidXlsxBuffer(buffer) {
+      if (!buffer || buffer.byteLength < 4) return false;
+      const bytes = new Uint8Array(buffer, 0, 4);
+      return bytes[0] === 0x50 && bytes[1] === 0x4B;
+    }
+
+    // Callback global de atualização em tempo real (JSONP sem bloqueio de CORS mesmo em file://)
+    window.onAdrianaLiveUpdate = function(rawRows) {
+      if (!Array.isArray(rawRows) || !rawRows.length) return;
+      const parsed = parseWorkbookRows(rawRows);
+      if (parsed.length) {
+        globalDataset = parsed;
+        try { localStorage.setItem("adriana_sharepoint_rows_v2", JSON.stringify(rawRows)); } catch (_) {}
+        const nowStr = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        const dot = document.getElementById("dotLive");
+        const statusText = document.getElementById("syncStatusText");
+        if (dot) dot.style.background = "var(--success)";
+        if (statusText) statusText.textContent = `Sincronizado Automaticamente (${globalDataset.length} amostras • ${nowStr})`;
+        populateFilterOptions(globalDataset);
+        renderDashboard();
+      }
+    };
+
+    // Sincronização 100% automática com o SharePoint e OneDrive em background
+    async function tryAutoSyncSharePoint() {
+      // 1. Tenta carregar adriana_dados.js via tag <script> (funciona em file:// e contorna bloqueio CORS do navegador)
+      try {
+        const oldScript = document.getElementById("adrianaLiveScript");
+        if (oldScript) oldScript.remove();
+        const s = document.createElement("script");
+        s.id = "adrianaLiveScript";
+        s.src = `./adriana_dados.js?_ts=${Date.now()}`;
+        document.head.appendChild(s);
+      } catch (_) {}
+
+      // 2. Tenta buscar o binário .xlsx diretamente dos endpoints do SharePoint
+      let loadedBuffer = null;
+      for (const baseUrl of SHAREPOINT_SYNC_URLS) {
+        const sep = baseUrl.includes("?") ? "&" : "?";
+        const urlWithBust = `${baseUrl}${sep}_ts=${Date.now()}`;
+        for (const credMode of ["include", "omit"]) {
+          try {
+            const resp = await fetch(urlWithBust, { method: "GET", credentials: credMode, cache: "no-store" });
+            if (resp.ok) {
+              const buf = await resp.arrayBuffer();
+              if (isValidXlsxBuffer(buf)) {
+                loadedBuffer = buf;
+                break;
+              }
+            }
+          } catch (_) {}
+        }
+        if (loadedBuffer) break;
+      }
+
+      if (loadedBuffer) {
+        try {
+          const data = new Uint8Array(loadedBuffer);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames.find(n => n.toLowerCase().includes("form") || n.toLowerCase().includes("planilha1") || n.toLowerCase().includes("sheet1")) || workbook.SheetNames[0];
+          const rawRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+          window.onAdrianaLiveUpdate(rawRows);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    // Filtros Globais
+    const ordemMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Outubro", "Novembro", "Dezembro"];
+    const filterMap = [
+      { id: "fMes", key: "Mes" },
+      { id: "fProduto", key: "Produto" },
+      { id: "fResultado", key: "Resultado_Negociacao" },
+      { id: "fElegibilidade", key: "Elegibilidade" },
+      { id: "fAvaliador", key: "Avaliador" }
+    ];
+
+    function populateFilterOptions(data) {
+      filterMap.forEach(({ id, key }) => {
+        const select = document.getElementById(id);
+        if (!select) return;
+        const currentVal = select.value;
+        let uniqueVals = [...new Set(data.map(item => item[key]).filter(Boolean))];
+        if (key === "Mes") {
+          uniqueVals.sort((a, b) => ordemMeses.indexOf(a) - ordemMeses.indexOf(b));
+        } else {
+          uniqueVals.sort();
+        }
+        select.innerHTML = `<option value="">Todos(as)</option>` + uniqueVals.map(v => `<option value="${v}">${v}</option>`).join("");
+        select.value = currentVal;
+      });
+    }
+
+    function getFilteredData() {
+      const dStart = document.getElementById("fDateStart").value;
+      const dEnd = document.getElementById("fDateEnd").value;
+      return globalDataset.filter(row => {
+        if (dStart && row.Data < dStart) return false;
+        if (dEnd && row.Data > dEnd) return false;
+        for (const { id, key } of filterMap) {
+          const el = document.getElementById(id);
+          if (el && el.value && row[key] !== el.value) return false;
+        }
+        return true;
+      });
+    }
+
+    function calculateScore(row) {
+      const ec = row.Erro_Critico;
+      const fg = row.Falha_Grave;
+      const cli = row.Nota_Bloco_Cliente * 100;
+      const neg = row.Nota_Bloco_Negocio * 100;
+      const proc = row.Nota_Bloco_Processo * 100;
+
+      if (ec || fg) {
+        return { notaFinal: 0, cli, neg, proc, ec, fg };
+      }
+      const notaFinal = (row.Nota_Bloco_Cliente * 50) + (row.Nota_Bloco_Negocio * 40) + (row.Nota_Bloco_Processo * 10);
+      return { notaFinal, cli, neg, proc, ec, fg };
+    }
+
+    const fmtPct = n => (Number(n) || 0).toFixed(1).replace(".", ",") + "%";
+
+    function renderDashboard() {
+      const filtered = getFilteredData();
+      const total = filtered.length;
+
+      document.getElementById("badgeCountAuditorias").textContent = total;
+
+      let sumNota = 0, sumCli = 0, sumNeg = 0, sumProc = 0, countEC = 0, countFG = 0;
+      const enriched = filtered.map(r => {
+        const c = calculateScore(r);
+        sumNota += c.notaFinal; sumCli += c.cli; sumNeg += c.neg; sumProc += c.proc;
+        if (c.ec) countEC++;
+        if (c.fg) countFG++;
+        return { ...r, _calc: c };
+      });
+
+      document.getElementById("kpiNotaGeral").textContent = total ? fmtPct(sumNota / total) : "0,0%";
+      document.getElementById("kpiVolume").textContent = total;
+      document.getElementById("kpiNotaCliente").textContent = total ? fmtPct(sumCli / total) : "0,0%";
+      document.getElementById("kpiVolCliente").textContent = `${total} amostras`;
+      document.getElementById("kpiNotaNegocio").textContent = total ? fmtPct(sumNeg / total) : "0,0%";
+      document.getElementById("kpiVolNegocio").textContent = `${total} amostras`;
+      document.getElementById("kpiNotaProcesso").textContent = total ? fmtPct(sumProc / total) : "0,0%";
+      document.getElementById("kpiVolProcesso").textContent = `${total} amostras`;
+      document.getElementById("kpiECPct").textContent = total ? fmtPct((countEC / total) * 100) : "0,0%";
+      document.getElementById("kpiECVol").textContent = `${countEC} ocorrências`;
+      document.getElementById("kpiFGPct").textContent = total ? fmtPct((countFG / total) * 100) : "0,0%";
+      document.getElementById("kpiFGVol").textContent = `${countFG} ocorrências`;
+
+      updateExecutiveCharts(enriched);
+      renderNegocioTab(enriched);
+      renderFcrqTab(enriched);
+      renderAdicionaisTab(enriched);
+      renderReincidenceTable(enriched);
+      renderFullAuditTable(enriched);
+    }
+
+    // =========================================================================
+    // ABA 1: DASHBOARD — EVOLUÇÃO MENSAL (OUTUBRO E NOVEMBRO) E TOP 5 OFENSORES
+    // =========================================================================
+    function updateExecutiveCharts(data) {
+      // Agrupa exclusivamente pelos meses de Outubro (10) e Novembro (11)
+      const mesesConfig = [
+        { mes: "10", nome: "Outubro" },
+        { mes: "11", nome: "Novembro" }
+      ];
+      const mg = {
+        "10": { v: 0, s: 0 },
+        "11": { v: 0, s: 0 }
+      };
+
+      data.forEach(i => {
+        const parts = String(i.Data || "").split("-");
+        const m = parts.length >= 2 ? parts[1] : "";
+        if (mg[m]) {
+          mg[m].v++;
+          mg[m].s += i._calc.notaFinal;
+        }
+      });
+
+      const displayLbls = mesesConfig.map(m => m.nome);
+      const volSeries = mesesConfig.map(m => mg[m.mes].v);
+      const scoreSeries = mesesConfig.map(m => mg[m.mes].v ? Number((mg[m.mes].s / mg[m.mes].v).toFixed(1)) : 0);
+      const maxVol = Math.max(...volSeries, 4);
+
+      const monthlyOverlayPlugin = {
+        id: "monthlyOverlayPlugin",
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          ctx.save();
+
+          // 1. Números de Volume sobre as Barras (dataset index 1)
+          const barMeta = chart.getDatasetMeta(1);
+          const barData = chart.data.datasets[1].data;
+          barMeta.data.forEach((barEl, idx) => {
+            const val = barData[idx];
+            const pos = barEl.tooltipPosition();
+            ctx.font = "700 13px Inter, sans-serif";
+            ctx.fillStyle = "#0F172A";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            const yPos = val > 0 ? Math.min(barEl.y + 22, barEl.base - 6) : barEl.base - 6;
+            ctx.fillText(`${val}`, pos.x, yPos);
+          });
+
+          // 2. Nota do Mês (%) sobre a Linha (dataset index 0)
+          const lineMeta = chart.getDatasetMeta(0);
+          const lineData = chart.data.datasets[0].data;
+          lineMeta.data.forEach((ptEl, idx) => {
+            const val = lineData[idx];
+            const text = `${String(val.toFixed(1)).replace(".", ",")}%`;
+            const x = ptEl.x;
+            const y = ptEl.y - 16;
+
+            ctx.font = "700 12px Inter, sans-serif";
+            const padX = 7, padY = 4;
+            const textWidth = ctx.measureText(text).width;
+            const boxW = textWidth + padX * 2;
+            const boxH = 20;
+
+            ctx.fillStyle = "#EFF6FF";
+            ctx.strokeStyle = "#93C5FD";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(x - boxW / 2, y - boxH / 2, boxW, boxH, 6);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = "#1D4ED8";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, x, y);
+          });
+
+          ctx.restore();
+        }
+      };
+
+      if (chartEvolutionInstance) chartEvolutionInstance.destroy();
+      chartEvolutionInstance = new Chart(document.getElementById("chartEvolution"), {
+        data: {
+          labels: displayLbls,
+          datasets: [
+            {
+              type: "line",
+              label: "Nota do Mês (%)",
+              data: scoreSeries,
+              borderColor: "#2563EB",
+              backgroundColor: "#2563EB",
+              borderWidth: 3,
+              tension: 0.3,
+              yAxisID: "yScore",
+              pointRadius: 5,
+              pointBackgroundColor: "#FFF",
+              pointBorderWidth: 2,
+              order: 1
+            },
+            {
+              type: "bar",
+              label: "Amostras (Volume)",
+              data: volSeries,
+              backgroundColor: "rgba(14, 165, 233, 0.38)",
+              borderColor: "rgba(14, 165, 233, 0.8)",
+              borderWidth: 1,
+              borderRadius: 8,
+              barThickness: 54,
+              yAxisID: "yVol",
+              order: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 28, bottom: 4, left: 12, right: 12 } },
+          plugins: { legend: { position: "top" } },
+          scales: {
+            x: { grid: { display: false } },
+            yVol: { type: "linear", position: "left", display: false, beginAtZero: true, max: Math.ceil(maxVol * 1.6) },
+            yScore: { type: "linear", position: "right", display: false, min: 0, max: 125, grid: { drawOnChartArea: false } }
+          }
+        },
+        plugins: [monthlyOverlayPlugin]
+      });
+
+      const oc = {};
+      data.forEach(i => (i.Apontamentos || []).forEach(a => {
+        oc[a.item] = (oc[a.item] || 0) + 1;
+      }));
+      const top = Object.entries(oc).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+      if (chartOffendersInstance) chartOffendersInstance.destroy();
+      chartOffendersInstance = new Chart(document.getElementById("chartOffenders"), {
+        type: "bar",
+        data: {
+          labels: top.length ? top.map(t => t[0].length > 38 ? t[0].substring(0, 38) + "..." : t[0]) : ["Sem apontamentos"],
+          datasets: [{
+            data: top.length ? top.map(t => t[1]) : [0],
+            backgroundColor: ["#EF4444", "#F59E0B", "#8B5CF6", "#3B82F6", "#10B981"],
+            borderRadius: 6,
+            barThickness: 24
+          }]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+    }
+
+    // =========================================================================
+    // ABA 2: RESULTADO DE NEGÓCIO (INTACTA CONFORME VALIDADO)
+    // =========================================================================
+    function renderNegocioTab(data) {
+      const total = data.length;
+      const CATEGORIAS_NEGOCIO = [
+        "Retido com argumentação",
+        "Retido com desconto",
+        "Cancelado",
+        "Transferiu/Queda/Muda"
+      ];
+
+      const counts = {
+        "Retido com argumentação": 0,
+        "Retido com desconto": 0,
+        "Cancelado": 0,
+        "Transferiu/Queda/Muda": 0
+      };
+
+      data.forEach(r => {
+        const k = CATEGORIAS_NEGOCIO.includes(r.Resultado_Negociacao) ? r.Resultado_Negociacao : "Transferiu/Queda/Muda";
+        counts[k] = (counts[k] || 0) + 1;
+      });
+
+      const retidosTotal = counts["Retido com argumentação"] + counts["Retido com desconto"];
+      const retPct = total ? (retidosTotal / total) * 100 : 0;
+
+      document.getElementById("badgeRetencao").textContent = fmtPct(retPct);
+      document.getElementById("kpiNegRetencaoTotalPct").textContent = fmtPct(retPct);
+      document.getElementById("kpiNegRetencaoTotalVol").textContent = `${retidosTotal} de ${total} negociações`;
+
+      document.getElementById("kpiNegRetArgPct").textContent = total ? fmtPct((counts["Retido com argumentação"] / total) * 100) : "0,0%";
+      document.getElementById("kpiNegRetArgVol").textContent = `${counts["Retido com argumentação"]} ocorrências`;
+
+      document.getElementById("kpiNegRetDescPct").textContent = total ? fmtPct((counts["Retido com desconto"] / total) * 100) : "0,0%";
+      document.getElementById("kpiNegRetDescVol").textContent = `${counts["Retido com desconto"]} ocorrências`;
+
+      document.getElementById("kpiNegCanceladoPct").textContent = total ? fmtPct((counts["Cancelado"] / total) * 100) : "0,0%";
+      document.getElementById("kpiNegCanceladoVol").textContent = `${counts["Cancelado"]} ocorrências`;
+
+      document.getElementById("kpiNegTransfPct").textContent = total ? fmtPct((counts["Transferiu/Queda/Muda"] / total) * 100) : "0,0%";
+      document.getElementById("kpiNegTransfVol").textContent = `${counts["Transferiu/Queda/Muda"]} ocorrências`;
+
+      // Gráfico 1: Resultado Geral da Negociação
+      if (chartNegocioGeralInstance) chartNegocioGeralInstance.destroy();
+      chartNegocioGeralInstance = new Chart(document.getElementById("chartNegocioGeral"), {
+        type: "bar",
+        data: {
+          labels: CATEGORIAS_NEGOCIO,
+          datasets: [{
+            label: "Volume de Ligações",
+            data: CATEGORIAS_NEGOCIO.map(c => counts[c]),
+            backgroundColor: ["#10B981", "#2563EB", "#EF4444", "#F59E0B"],
+            borderRadius: 8,
+            barThickness: 38
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const v = ctx.parsed.y;
+                  const p = total ? ((v / total) * 100).toFixed(1).replace(".", ",") : "0,0";
+                  return ` ${v} chamadas (${p}%)`;
+                }
+              }
+            }
+          },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+
+      // Gráfico 2: Resultado por Produto
+      const produtos = ["Conteúdo Exclusivo", "UOL Play"];
+      if (chartNegocioProdutoInstance) chartNegocioProdutoInstance.destroy();
+      chartNegocioProdutoInstance = new Chart(document.getElementById("chartNegocioProduto"), {
+        type: "bar",
+        data: {
+          labels: produtos,
+          datasets: [
+            {
+              label: "Retido c/ Argumentação",
+              data: produtos.map(p => data.filter(r => r.Produto === p && r.Resultado_Negociacao === "Retido com argumentação").length),
+              backgroundColor: "#10B981",
+              borderRadius: 4
+            },
+            {
+              label: "Retido c/ Desconto",
+              data: produtos.map(p => data.filter(r => r.Produto === p && r.Resultado_Negociacao === "Retido com desconto").length),
+              backgroundColor: "#2563EB",
+              borderRadius: 4
+            },
+            {
+              label: "Cancelado",
+              data: produtos.map(p => data.filter(r => r.Produto === p && r.Resultado_Negociacao === "Cancelado").length),
+              backgroundColor: "#EF4444",
+              borderRadius: 4
+            },
+            {
+              label: "Transferiu/Queda/Muda",
+              data: produtos.map(p => data.filter(r => r.Produto === p && r.Resultado_Negociacao === "Transferiu/Queda/Muda").length),
+              backgroundColor: "#F59E0B",
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "top" } },
+          scales: {
+            x: { stacked: false },
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+
+      // Tabela Detalhada de Negócio
+      const tbody = document.getElementById("negocioTableBody");
+      tbody.innerHTML = data.map(r => {
+        const res = r.Resultado_Negociacao;
+        const badgeCls = res.startsWith("Retido") ? "badge-success" : (res === "Cancelado" ? "badge-danger" : "badge-warning");
+        return `
+          <tr>
+            <td>${r.Data || "-"}</td>
+            <td><code>${r.IDT_Conversation}</code></td>
+            <td><span class="badge badge-product">${r.Produto}</span></td>
+            <td><strong>${r.Motivo_Contato || "-"}</strong></td>
+            <td><span class="badge ${badgeCls}">${res}</span></td>
+            <td><strong>${fmtPct(r._calc.notaFinal)}</strong></td>
+            <td style="max-width:380px;font-size:12px;color:var(--text-secondary);">${r.Resumo_Atendimento || "-"}</td>
+            <td><a class="btn-genesys" target="_blank" rel="noopener" href="${buildGenesysUrl(r.IDT_Conversation)}">🎧 Ouvir Genesys</a></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // =========================================================================
+    // ABA 3: FCRQ (GRÁFICOS DE PIZZA COM VOLUME E % VISÍVEIS DIRETO NO GRÁFICO)
+    // =========================================================================
+    function renderFcrqTab(data) {
+      const total = data.length;
+      const elegiveis = data.filter(r => r.Elegibilidade === "Elegível");
+      const naoElegiveis = data.filter(r => r.Elegibilidade === "Não elegível");
+
+      const resolveu = elegiveis.filter(r => r.Elegivel_Resolucao === "Resolveu");
+      const naoResolveu = elegiveis.filter(r => r.Elegivel_Resolucao === "Não resolveu");
+
+      const elegPct = total ? (elegiveis.length / total) * 100 : 0;
+      const naoElegPct = total ? (naoElegiveis.length / total) * 100 : 0;
+      const fcrqPct = elegiveis.length ? (resolveu.length / elegiveis.length) * 100 : 0;
+      const naoResPct = elegiveis.length ? (naoResolveu.length / elegiveis.length) * 100 : 0;
+
+      const elegRound = total ? Math.round(elegPct) : 0;
+      const naoElegRound = total ? (100 - elegRound) : 0;
+      const resRound = elegiveis.length ? Math.round(fcrqPct) : 0;
+      const naoResRound = elegiveis.length ? (100 - resRound) : 0;
+
+      document.getElementById("badgeFCRQ").textContent = fmtPct(fcrqPct);
+      document.getElementById("kpiFcrqElegivelPct").textContent = fmtPct(elegPct);
+      document.getElementById("kpiFcrqElegivelVol").textContent = `${elegiveis.length} de ${total} chamadas`;
+
+      document.getElementById("kpiFcrqNaoElegivelPct").textContent = fmtPct(naoElegPct);
+      document.getElementById("kpiFcrqNaoElegivelVol").textContent = `${naoElegiveis.length} de ${total} chamadas`;
+
+      document.getElementById("kpiFcrqResolveuPct").textContent = fmtPct(fcrqPct);
+      document.getElementById("kpiFcrqResolveuVol").textContent = `${resolveu.length} de ${elegiveis.length} elegíveis`;
+
+      document.getElementById("kpiFcrqNaoResolveuPct").textContent = fmtPct(naoResPct);
+      document.getElementById("kpiFcrqNaoResolveuVol").textContent = `${naoResolveu.length} de ${elegiveis.length} elegíveis`;
+
+      // Plugin para exibir "12 (67%)" diretamente sobre as fatias dos gráficos de pizza
+      const pieDirectLabelsPlugin = {
+        id: "pieDirectLabelsPlugin",
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          const ds = chart.data.datasets[0];
+          const meta = chart.getDatasetMeta(0);
+          const sum = ds.data.reduce((a, b) => a + b, 0);
+          if (!sum) return;
+
+          ctx.save();
+          meta.data.forEach((arc, i) => {
+            const val = ds.data[i];
+            if (!val) return;
+            const pct = Math.round((val / sum) * 100);
+            const pos = arc.tooltipPosition();
+            ctx.font = "700 12.5px Inter, sans-serif";
+            ctx.fillStyle = "#FFFFFF";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.shadowColor = "rgba(15, 23, 42, 0.45)";
+            ctx.shadowBlur = 4;
+            ctx.fillText(`${val} (${pct}%)`, pos.x, pos.y);
+          });
+          ctx.restore();
+        }
+      };
+
+      // Gráfico 1: Pizza de Elegibilidade ("12 (67%) Elegível" e "6 (33%) Não elegível")
+      if (chartFcrqElegibilidadeInstance) chartFcrqElegibilidadeInstance.destroy();
+      chartFcrqElegibilidadeInstance = new Chart(document.getElementById("chartFcrqElegibilidade"), {
+        type: "pie",
+        data: {
+          labels: [
+            `${elegiveis.length} (${elegRound}%) Elegível`,
+            `${naoElegiveis.length} (${naoElegRound}%) Não elegível`
+          ],
+          datasets: [{
+            data: [elegiveis.length, naoElegiveis.length],
+            backgroundColor: ["#2563EB", "#64748B"],
+            borderWidth: 2,
+            borderColor: "#FFFFFF"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { font: { family: "Inter", size: 12, weight: "600" }, padding: 14 }
+            }
+          }
+        },
+        plugins: [pieDirectLabelsPlugin]
+      });
+
+      // Gráfico 2: Pizza de Elegível - Resolução ("11 (92%) Resolveu" e "1 (8%) Não resolveu")
+      if (chartFcrqResolucaoInstance) chartFcrqResolucaoInstance.destroy();
+      chartFcrqResolucaoInstance = new Chart(document.getElementById("chartFcrqResolucao"), {
+        type: "pie",
+        data: {
+          labels: [
+            `${resolveu.length} (${resRound}%) Resolveu`,
+            `${naoResolveu.length} (${naoResRound}%) Não resolveu`
+          ],
+          datasets: [{
+            data: [resolveu.length, naoResolveu.length],
+            backgroundColor: ["#10B981", "#EF4444"],
+            borderWidth: 2,
+            borderColor: "#FFFFFF"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { font: { family: "Inter", size: 12, weight: "600" }, padding: 14 }
+            }
+          }
+        },
+        plugins: [pieDirectLabelsPlugin]
+      });
+
+      // Gráfico 3: Não Elegível - Resolução (com números visíveis ao lado da barra)
+      const OPCOES_NAO_ELEGIVEL = [
+        "Transbordo - Processo não atendido",
+        "Transferência - Solicitação do cliente",
+        "Queda de ligação",
+        "Outro"
+      ];
+      const countsNaoEleg = {
+        "Transbordo - Processo não atendido": 0,
+        "Transferência - Solicitação do cliente": 0,
+        "Queda de ligação": 0,
+        "Outro": 0
+      };
+      naoElegiveis.forEach(r => {
+        const op = OPCOES_NAO_ELEGIVEL.includes(r.Nao_Elegivel_Resolucao) ? r.Nao_Elegivel_Resolucao : "Outro";
+        countsNaoEleg[op] = (countsNaoEleg[op] || 0) + 1;
+      });
+      const maxNaoEleg = Math.max(...Object.values(countsNaoEleg), 3);
+
+      const barDirectLabelsPlugin = {
+        id: "barDirectLabelsPlugin",
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          const ds = chart.data.datasets[0];
+          const meta = chart.getDatasetMeta(0);
+          const sum = naoElegiveis.length;
+          ctx.save();
+          meta.data.forEach((bar, i) => {
+            const val = ds.data[i];
+            const pct = sum ? Math.round((val / sum) * 100) : 0;
+            ctx.font = "700 11.5px Inter, sans-serif";
+            ctx.fillStyle = "#334155";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText(`${val} (${pct}%)`, bar.x + 6, bar.y);
+          });
+          ctx.restore();
+        }
+      };
+
+      if (chartFcrqNaoElegivelInstance) chartFcrqNaoElegivelInstance.destroy();
+      chartFcrqNaoElegivelInstance = new Chart(document.getElementById("chartFcrqNaoElegivelOpcoes"), {
+        type: "bar",
+        data: {
+          labels: OPCOES_NAO_ELEGIVEL.map(o => o.length > 26 ? o.slice(0, 26) + "..." : o),
+          datasets: [{
+            label: "Ocorrências",
+            data: OPCOES_NAO_ELEGIVEL.map(o => countsNaoEleg[o]),
+            backgroundColor: ["#8B5CF6", "#F59E0B", "#EF4444", "#64748B"],
+            borderRadius: 6,
+            barThickness: 22
+          }]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { right: 55 } },
+          plugins: { legend: { display: false } },
+          scales: { x: { display: false, beginAtZero: true, max: Math.ceil(maxNaoEleg * 1.45) } }
+        },
+        plugins: [barDirectLabelsPlugin]
+      });
+
+      // Lista de Motivo Não Resolveu
+      const listNaoRes = document.getElementById("listMotivoNaoResolveu");
+      if (!naoResolveu.length) {
+        listNaoRes.innerHTML = `<div style="color:var(--success);font-weight:600;padding:12px;">✅ Todos os atendimentos elegíveis foram resolvidos!</div>`;
+      } else {
+        listNaoRes.innerHTML = naoResolveu.map(r => `
+          <div class="reason-item-card danger">
+            <div class="reason-item-meta">
+              <span><strong>${r.Data}</strong> • <span class="badge badge-product">${r.Produto}</span> • <code>${r.IDT_Conversation}</code></span>
+              <a class="btn-genesys" target="_blank" rel="noopener" href="${buildGenesysUrl(r.IDT_Conversation)}">🎧 Ouvir Genesys</a>
+            </div>
+            <div class="reason-item-text"><strong>Motivo não resolveu:</strong> ${r.Motivo_Nao_Resolveu || "Não especificado"}</div>
+          </div>
+        `).join("");
+      }
+
+      // Lista de Motivo Não Elegível
+      const listNaoEleg = document.getElementById("listMotivoNaoElegivel");
+      if (!naoElegiveis.length) {
+        listNaoEleg.innerHTML = `<div style="color:var(--text-muted);padding:12px;">Nenhuma interação classificada como Não Elegível no filtro atual.</div>`;
+      } else {
+        listNaoEleg.innerHTML = naoElegiveis.map(r => `
+          <div class="reason-item-card warning">
+            <div class="reason-item-meta">
+              <span><strong>${r.Data}</strong> • <span class="badge badge-warning">${r.Nao_Elegivel_Resolucao || "Outro"}</span> • <code>${r.IDT_Conversation}</code></span>
+              <a class="btn-genesys" target="_blank" rel="noopener" href="${buildGenesysUrl(r.IDT_Conversation)}">🎧 Ouvir Genesys</a>
+            </div>
+            <div class="reason-item-text"><strong>Motivo não elegível:</strong> ${r.Motivo_Nao_Elegivel || "Não especificado"}</div>
+          </div>
+        `).join("");
+      }
+
+      // Tabela FCRQ Completa
+      document.getElementById("fcrqTableBody").innerHTML = data.map(r => {
+        const elegBadge = r.Elegibilidade === "Elegível"
+          ? `<span class="badge badge-info">Elegível</span>`
+          : `<span class="badge badge-neutral">Não elegível</span>`;
+        const resBadge = r.Elegivel_Resolucao === "Resolveu"
+          ? `<span class="badge badge-success">Resolveu</span>`
+          : r.Elegivel_Resolucao === "Não resolveu"
+          ? `<span class="badge badge-danger">Não resolveu</span>`
+          : `<span style="color:var(--text-muted);">-</span>`;
+
+        return `
+          <tr>
+            <td>${r.Data || "-"}</td>
+            <td><code>${r.IDT_Conversation}</code></td>
+            <td><span class="badge badge-product">${r.Produto}</span></td>
+            <td>${elegBadge}</td>
+            <td>${resBadge}</td>
+            <td style="max-width:260px;">${r.Motivo_Nao_Resolveu || "-"}</td>
+            <td>${r.Nao_Elegivel_Resolucao ? `<span class="badge badge-warning">${r.Nao_Elegivel_Resolucao}</span>` : "-"}</td>
+            <td style="max-width:260px;">${r.Motivo_Nao_Elegivel || "-"}</td>
+            <td><a class="btn-genesys" target="_blank" rel="noopener" href="${buildGenesysUrl(r.IDT_Conversation)}">🎧 Ouvir Genesys</a></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // =========================================================================
+    // ABA 4: EXPERIÊNCIA & DIAGNÓSTICO IA (SEM NÚMEROS NAS BOXES E TÍTULOS)
+    // =========================================================================
+    function renderAdicionaisTab(data) {
+      const total = data.length;
+      const qRoboSim = data.filter(r => r.Queixa_Robo === "Sim").length;
+      const pHumanoSim = data.filter(r => r.Pediu_Humano === "Sim").length;
+      const cadCorretoSim = data.filter(r => r.Cadastro_Correto === "Sim").length;
+      const ruidoSim = data.filter(r => r.Ruido_Cliente === "Sim").length;
+      const velNC = data.filter(r => r.Velocidade_Fala === "Não conforme").length;
+      const loopNC = data.filter(r => r.Looping_Conversacional === "Não conforme").length;
+
+      document.getElementById("kpiAddQueixaRoboPct").textContent = total ? fmtPct((qRoboSim / total) * 100) : "0,0%";
+      document.getElementById("kpiAddQueixaRoboVol").textContent = `${qRoboSim} Sim / ${total - qRoboSim} Não`;
+
+      document.getElementById("kpiAddPediuHumanoPct").textContent = total ? fmtPct((pHumanoSim / total) * 100) : "0,0%";
+      document.getElementById("kpiAddPediuHumanoVol").textContent = `${pHumanoSim} Sim / ${total - pHumanoSim} Não`;
+
+      document.getElementById("kpiAddCadastroCorretoPct").textContent = total ? fmtPct((cadCorretoSim / total) * 100) : "0,0%";
+      document.getElementById("kpiAddCadastroCorretoVol").textContent = `${cadCorretoSim} Sim / ${total - cadCorretoSim} Não`;
+
+      document.getElementById("kpiAddRuidoClientePct").textContent = total ? fmtPct((ruidoSim / total) * 100) : "0,0%";
+      document.getElementById("kpiAddRuidoClienteVol").textContent = `${ruidoSim} Sim / ${total - ruidoSim} Não`;
+
+      document.getElementById("kpiAddVelocidadeNCPct").textContent = total ? fmtPct((velNC / total) * 100) : "0,0%";
+      document.getElementById("kpiAddVelocidadeNCVol").textContent = `${velNC} Não conforme`;
+
+      document.getElementById("kpiAddLoopingNCPct").textContent = total ? fmtPct((loopNC / total) * 100) : "0,0%";
+      document.getElementById("kpiAddLoopingNCVol").textContent = `${loopNC} Não conforme`;
+
+      if (chartAdicionaisInstance) chartAdicionaisInstance.destroy();
+      chartAdicionaisInstance = new Chart(document.getElementById("chartAdicionaisResumo"), {
+        type: "bar",
+        data: {
+          labels: [
+            "Queixa de Robô",
+            "Pediu Humano",
+            "Cadastro Incorreto",
+            "Ruído do Cliente",
+            "Velocidade Inadequada",
+            "Looping Conversacional"
+          ],
+          datasets: [
+            {
+              label: "Ocorrências (Sim / Não Conforme)",
+              data: [qRoboSim, pHumanoSim, total - cadCorretoSim, ruidoSim, velNC, loopNC],
+              backgroundColor: ["#EF4444", "#F59E0B", "#DC2626", "#7C3AED", "#0EA5E9", "#EC4899"],
+              borderRadius: 6
+            },
+            {
+              label: "Demais (Não / Conforme)",
+              data: [total - qRoboSim, total - pHumanoSim, cadCorretoSim, total - ruidoSim, total - velNC, total - loopNC],
+              backgroundColor: "#E2E8F0",
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "top" } },
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true, ticks: { stepSize: 2 } }
+          }
+        }
+      });
+
+      // Lista de Motivos e Observações (sem numeração de questões)
+      const motivosCards = [];
+      data.forEach(r => {
+        if (r.Queixa_Robo === "Sim" || r.Motivo_Queixa_Robo) {
+          motivosCards.push({ data: r.Data, id: r.IDT_Conversation, prod: r.Produto, tag: "Motivo Queixa Robô", cls: "danger", text: r.Motivo_Queixa_Robo || "Cliente apresentou queixa por falar com robô." });
+        }
+        if (r.Pediu_Humano === "Sim" || r.Motivo_Pediu_Humano) {
+          motivosCards.push({ data: r.Data, id: r.IDT_Conversation, prod: r.Produto, tag: "Motivo Pediu Humano", cls: "warning", text: r.Motivo_Pediu_Humano || "Cliente pediu para falar com atendente humano." });
+        }
+        if (r.Cadastro_Correto === "Não" || r.Descricao_Cadastro) {
+          motivosCards.push({ data: r.Data, id: r.IDT_Conversation, prod: r.Produto, tag: "Cadastro Prestado", cls: "danger", text: r.Descricao_Cadastro || "Atendimento prestado em cadastro divergente." });
+        }
+        if (r.Ruido_Cliente === "Sim") {
+          motivosCards.push({ data: r.Data, id: r.IDT_Conversation, prod: r.Produto, tag: "Ruído por parte do cliente", cls: "warning", text: "Houve ruído/ausência de fala por parte do cliente que impossibilitou o entendimento da AdrIAna." });
+        }
+        if (r.Velocidade_Fala === "Não conforme" || r.Motivo_Velocidade_Fala) {
+          motivosCards.push({ data: r.Data, id: r.IDT_Conversation, prod: r.Produto, tag: "Velocidade da Fala (NC)", cls: "warning", text: r.Motivo_Velocidade_Fala || "Velocidade da fala inadequada." });
+        }
+        if (r.Looping_Conversacional === "Não conforme" || r.Motivo_Looping) {
+          motivosCards.push({ data: r.Data, id: r.IDT_Conversation, prod: r.Produto, tag: "Looping Conversacional (NC)", cls: "danger", text: r.Motivo_Looping || "Ocorrência de looping conversacional." });
+        }
+      });
+
+      const listAdd = document.getElementById("listMotivosAdicionais");
+      if (!motivosCards.length) {
+        listAdd.innerHTML = `<div style="color:var(--success);font-weight:600;padding:12px;">✅ Nenhuma queixa ou anomalia adicional registrada nas amostras filtradas.</div>`;
+      } else {
+        listAdd.innerHTML = motivosCards.map(m => `
+          <div class="reason-item-card ${m.cls}">
+            <div class="reason-item-meta">
+              <span><strong>${m.data}</strong> • <span class="badge badge-product">${m.prod}</span> • <strong>${m.tag}</strong></span>
+              <a class="btn-genesys" target="_blank" rel="noopener" href="${buildGenesysUrl(m.id)}">🎧 Ouvir Genesys</a>
+            </div>
+            <div class="reason-item-text">${m.text}</div>
+          </div>
+        `).join("");
+      }
+
+      // Tabela Completa Informações Adicionais
+      document.getElementById("adicionaisTableBody").innerHTML = data.map(r => {
+        const roboBadge = r.Queixa_Robo === "Sim" ? `<span class="badge badge-danger">Sim</span>` : `<span class="badge badge-success">Não</span>`;
+        const humBadge = r.Pediu_Humano === "Sim" ? `<span class="badge badge-warning">Sim</span>` : `<span class="badge badge-success">Não</span>`;
+        const cadBadge = r.Cadastro_Correto === "Sim" ? `<span class="badge badge-success">Sim</span>` : `<span class="badge badge-danger">Não</span>`;
+        const ruidoBadge = r.Ruido_Cliente === "Sim" ? `<span class="badge badge-warning">Sim</span>` : `<span class="badge badge-success">Não</span>`;
+
+        const vozLoop = [];
+        if (r.Velocidade_Fala === "Não conforme") vozLoop.push(`<span class="badge badge-warning" title="${r.Motivo_Velocidade_Fala}">Velocidade NC</span>`);
+        if (r.Looping_Conversacional === "Não conforme") vozLoop.push(`<span class="badge badge-danger" title="${r.Motivo_Looping}">Looping NC</span>`);
+        if (!vozLoop.length) vozLoop.push(`<span class="badge badge-success">Conforme</span>`);
+
+        return `
+          <tr>
+            <td>${r.Data || "-"}</td>
+            <td><code>${r.IDT_Conversation}</code></td>
+            <td><span class="badge badge-product">${r.Produto}</span></td>
+            <td>${roboBadge}</td>
+            <td style="max-width:200px;">${r.Motivo_Queixa_Robo || "-"}</td>
+            <td>${humBadge}</td>
+            <td style="max-width:220px;">${r.Motivo_Pediu_Humano || "-"}</td>
+            <td>${cadBadge}</td>
+            <td style="max-width:180px;">${r.Descricao_Cadastro || "-"}</td>
+            <td>${ruidoBadge}</td>
+            <td>${vozLoop.join(" ")}</td>
+            <td><a class="btn-genesys" target="_blank" rel="noopener" href="${buildGenesysUrl(r.IDT_Conversation)}">🎧 Ouvir Genesys</a></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // =========================================================================
+    // ABA 5: VISÃO POR PRODUTO
+    // =========================================================================
+    function renderReincidenceTable(data) {
+      const tb = document.getElementById("reincidenceTableBody");
+      tb.innerHTML = "";
+      const g = {};
+      data.forEach(r => {
+        const p = r.Produto;
+        if (!g[p]) g[p] = { a: 0, f: 0, nc: 0, sn: 0, reasonsMap: {}, rows: [] };
+        g[p].a++;
+        g[p].sn += r._calc.notaFinal;
+        
+        const ncs = r.Apontamentos;
+        if (ncs.length) { 
+          g[p].f++;
+          g[p].nc += ncs.length; 
+          ncs.forEach(nc => g[p].reasonsMap[nc.item] = (g[p].reasonsMap[nc.item] || 0) + 1);
+        }
+        g[p].rows.push(r);
+      });
+
+      const sortedGroups = Object.entries(g).sort((a, b) => b[1].nc - a[1].nc);
+      document.getElementById("badgeCountProdutos").textContent = sortedGroups.length;
+
+      sortedGroups.forEach(([prod, d]) => {
+        const pct = (d.f / d.a) * 100;
+        const avg = d.sn / d.a;
+        const badgeClass = pct >= 50 ? "badge-danger" : (pct > 0 ? "badge-warning" : "badge-success");
+
+        const tr = document.createElement("tr");
+        tr.className = "main-row";
+        tr.innerHTML = `
+          <td style="text-align:center;"><span class="expand-icon">▶</span></td>
+          <td><span class="badge badge-product">${prod}</span></td>
+          <td><strong>${d.a}</strong> auditorias</td>
+          <td><strong>${d.nc}</strong> apontamentos</td>
+          <td><span class="badge ${badgeClass}">${pct.toFixed(1).replace(".", ",")}%</span></td>
+          <td><strong>${avg.toFixed(1).replace(".", ",")}%</strong></td>
+        `;
+
+        const sortedReasons = Object.entries(d.reasonsMap).sort((a, b) => b[1] - a[1]);
+        const chipsHtml = sortedReasons.length 
+          ? sortedReasons.map(([m, q]) => `<div class="reason-chip"><strong>${q}x</strong> <span>${m}</span></div>`).join("") 
+          : `<span style="color:#10B981;font-weight:600;">✅ Sem falhas</span>`;
+
+        const rowsHtml = d.rows.map(r => {
+          const mList = r.Apontamentos.length
+            ? r.Apontamentos.map(x => `• <strong>${x.item}</strong>${x.motivo && x.motivo !== x.item ? `: ${x.motivo}` : ""}`).join("<br>")
+            : `<span style="color:#10B981;font-weight:600;">Conforme</span>`;
+          return `<tr>
+            <td>${r.Data || "-"}</td>
+            <td><code>${r.IDT_Conversation}</code></td>
+            <td>${r.IDT_Person || "-"}</td>
+            <td>${mList}</td>
+            <td><strong>${r._calc.notaFinal.toFixed(1).replace(".", ",")}%</strong></td>
+            <td><a class="btn-genesys" target="_blank" rel="noopener" href="${buildGenesysUrl(r.IDT_Conversation)}">🎧 Ouvir Genesys</a></td>
+          </tr>`;
+        }).join("");
+
+        const trD = document.createElement("tr");
+        trD.className = "drilldown-row";
+        trD.innerHTML = `
+          <td colspan="6">
+            <div style="padding:18px;">
+              <div style="margin-bottom:12px;">${chipsHtml}</div>
+              <table style="width:100%; background:#FFF; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;">
+                <thead><tr><th>Data</th><th>IDT_Conversation</th><th>IDT_Person</th><th>Apontamentos NC</th><th>Nota Final</th><th>Ação</th></tr></thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+            </div>
+          </td>
+        `;
+
+        tr.onclick = () => {
+          tr.classList.toggle("expanded");
+          trD.classList.toggle("active");
+        };
+        tb.appendChild(tr);
+        tb.appendChild(trD);
+      });
+    }
+
+    // =========================================================================
+    // ABA 6: BASE COMPLETA DE AUDITORIAS
+    // =========================================================================
+    function renderFullAuditTable(data) {
+      const tb = document.getElementById("fullAuditTableBody");
+      const query = (document.getElementById("fSearchBase").value || "").trim().toLowerCase();
+
+      const rows = query
+        ? data.filter(r =>
+            r.IDT_Conversation.toLowerCase().includes(query) ||
+            r.IDT_Person.toLowerCase().includes(query) ||
+            r.Protocolo.toLowerCase().includes(query) ||
+            r.Produto.toLowerCase().includes(query)
+          )
+        : data;
+
+      if (!rows.length) {
+        tb.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text-muted);">Nenhum registro encontrado para a busca atual.</td></tr>`;
+        return;
+      }
+
+      tb.innerHTML = rows.map(r => {
+        const mList = r.Apontamentos.length
+          ? r.Apontamentos.map(x => `• <strong>${x.item}</strong>`).join("<br>")
+          : `<span class="badge badge-success">Conforme</span>`;
+        const notaClass = r._calc.notaFinal >= 85 ? "badge-success" : (r._calc.notaFinal >= 70 ? "badge-warning" : "badge-danger");
+        const resNegCls = r.Resultado_Negociacao.startsWith("Retido") ? "badge-success" : (r.Resultado_Negociacao === "Cancelado" ? "badge-danger" : "badge-warning");
+
+        return `
+          <tr>
+            <td>${r.Data || "-"}</td>
+            <td><code>${r.IDT_Conversation}</code></td>
+            <td>${r.IDT_Person || "-"}<br><small style="color:var(--text-muted)">${r.Protocolo || ""}</small></td>
+            <td><span class="badge badge-product">${r.Produto}</span></td>
+            <td><span class="badge ${resNegCls}">${r.Resultado_Negociacao}</span></td>
+            <td>${r.Elegibilidade}${r.Elegivel_Resolucao ? ` / <strong>${r.Elegivel_Resolucao}</strong>` : (r.Nao_Elegivel_Resolucao ? ` / <small>${r.Nao_Elegivel_Resolucao}</small>` : "")}</td>
+            <td>${r._calc.cli.toFixed(0)}%</td>
+            <td>${r._calc.neg.toFixed(0)}%</td>
+            <td>${r._calc.proc.toFixed(0)}%</td>
+            <td><span class="badge ${notaClass}">${r._calc.notaFinal.toFixed(1).replace(".", ",")}%</span></td>
+            <td>${mList}</td>
+            <td><a class="btn-genesys" target="_blank" rel="noopener" href="${buildGenesysUrl(r.IDT_Conversation)}">🎧 Ouvir Genesys</a></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // Eventos
+    document.querySelectorAll(".filters-grid select, .filters-grid input").forEach(el => el.addEventListener("change", renderDashboard));
+    document.getElementById("fSearchBase").addEventListener("input", () => {
+      const filtered = getFilteredData().map(r => ({ ...r, _calc: calculateScore(r) }));
+      renderFullAuditTable(filtered);
+    });
+    document.getElementById("btnClearFilters").addEventListener("click", () => {
+      document.querySelectorAll(".filters-grid select, .filters-grid input").forEach(el => el.value = "");
+      document.getElementById("fSearchBase").value = "";
+      renderDashboard();
+    });
+
+    // Inicialização Imediata (Pública) + Compatibilidade com Previewers Web + Auto-Sync Contínuo SharePoint
+    function ensureLibrariesLoaded(callback) {
+      const loadScript = (url) => new Promise((resolve) => {
+        const s = document.createElement("script");
+        s.src = url;
+        s.onload = resolve;
+        s.onerror = resolve;
+        document.head.appendChild(s);
+      });
+      const tasks = [];
+      if (typeof Chart === "undefined") {
+        tasks.push(loadScript("https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"));
+      }
+      if (typeof XLSX === "undefined") {
+        tasks.push(loadScript("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"));
+      }
+      if (tasks.length === 0) {
+        callback();
+      } else {
+        Promise.all(tasks).then(callback);
+      }
+    }
+
+    let dashboardBootstrapped = false;
+    function initDashboard() {
+      if (dashboardBootstrapped) return;
+      dashboardBootstrapped = true;
+
+      ensureLibrariesLoaded(() => {
+        try { localStorage.removeItem("adriana_sharepoint_rows_v2"); } catch (_) {}
+        globalDataset = parseWorkbookRows(INITIAL_SHAREPOINT_ROWS);
+        document.getElementById("dotLive").style.background = "var(--success)";
+        document.getElementById("syncStatusText").textContent = `Sincronizado Automaticamente (${globalDataset.length} amostras)`;
+        populateFilterOptions(globalDataset);
+        renderDashboard();
+
+        // Sincroniza automaticamente ao abrir, a cada 30s e ao focar na aba
+        tryAutoSyncSharePoint();
+        setInterval(tryAutoSyncSharePoint, 30000);
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") tryAutoSyncSharePoint();
+        });
+      });
+    }
+
+    if (document.readyState === "loading") {
+      window.addEventListener("DOMContentLoaded", initDashboard);
+      document.addEventListener("DOMContentLoaded", initDashboard);
+    } else {
+      initDashboard();
+    }
+  </script>
+</body>
+</html>
